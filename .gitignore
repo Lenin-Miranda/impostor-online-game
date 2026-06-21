@@ -1,0 +1,32 @@
+# dependencies
+node_modules/
+**/node_modules/
+
+# env
+.env
+.env.local
+**/.env
+**/.env.local
+
+# builds
+**/dist/
+**/.next/
+**/out/
+**/build/
+
+# logs
+*.log
+npm-debug.log*
+
+# misc
+.DS_Store
+**/.DS_Store
+
+# editor / tooling
+.vscode/
+.idea/
+.claude/
+
+# supabase
+supabase/.branches
+supabase/.temp
