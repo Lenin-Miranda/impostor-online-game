@@ -29,7 +29,7 @@ export function FinalCta() {
         <Reveal delay={0.2}>
           <div className="mt-10 flex flex-col items-center gap-4">
             <Magnetic strength={0.4}>
-              <Button href="#top" size="lg">
+              <Button href="/sala/7K2P9" size="lg">
                 Crear sala
                 <ArrowRight weight="bold" className="size-[18px]" />
               </Button>

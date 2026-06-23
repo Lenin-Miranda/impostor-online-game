@@ -53,7 +53,7 @@ export function SiteNav() {
           ))}
         </nav>
 
-        <Button href="#crear-sala">Crear sala</Button>
+        <Button href="/sala/7K2P9">Crear sala</Button>
       </div>
     </motion.header>
   );
