@@ -3,16 +3,16 @@ import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { WebSocket } from 'ws';
 
-// Node 20 no incluye WebSocket global, pero supabase-js lo necesita al
-// construir el cliente (módulo realtime). Se lo proveemos con `ws`.
+// Node 20 has no global WebSocket, but supabase-js needs it when
+// building the client (realtime module). We provide it via `ws`.
 const g = globalThis as { WebSocket?: unknown };
 if (typeof g.WebSocket === 'undefined') {
   g.WebSocket = WebSocket;
 }
 
 /**
- * Cliente de Supabase con la service_role key.
- * Úsalo SOLO en el backend (tiene permisos elevados, nunca lo expongas al cliente).
+ * Supabase client using the service_role key.
+ * Use it ONLY on the backend (elevated permissions, never expose it to the client).
  */
 @Injectable()
 export class SupabaseService implements OnModuleInit {
@@ -26,8 +26,8 @@ export class SupabaseService implements OnModuleInit {
 
     if (!url || !key) {
       console.warn(
-        '⚠️  SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY no definidos. ' +
-          'El cliente de Supabase no funcionará hasta configurarlos.',
+        '⚠️  SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not defined. ' +
+          'The Supabase client will not work until they are configured.',
       );
       return;
     }

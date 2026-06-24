@@ -1,16 +1,16 @@
 -- ============================================================
--- Semilla del catálogo de futbolistas
--- Datos de referencia (no de usuario), así que va bien dentro de
--- una migración: se recrean siempre igual al reconstruir la BD.
--- difficulty: 1 = muy conocido, 3 = más difícil de adivinar.
+-- Footballers catalog seed
+-- Reference data (not user data), so it fits inside a migration:
+-- it is recreated identically when rebuilding the DB.
+-- difficulty: 1 = very well known, 3 = harder to guess.
 -- ============================================================
 
 insert into public.footballers (name, league, difficulty) values
-  -- Leyendas
-  ('Lionel Messi',        'Leyendas',   1),
-  ('Cristiano Ronaldo',   'Leyendas',   1),
-  ('Ronaldinho',          'Leyendas',   2),
-  ('Zinedine Zidane',     'Leyendas',   2),
+  -- Legends
+  ('Lionel Messi',        'Legends',    1),
+  ('Cristiano Ronaldo',   'Legends',    1),
+  ('Ronaldinho',          'Legends',    2),
+  ('Zinedine Zidane',     'Legends',    2),
   -- LaLiga
   ('Vinícius Júnior',     'LaLiga',     1),
   ('Lamine Yamal',        'LaLiga',     1),

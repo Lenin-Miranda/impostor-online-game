@@ -13,7 +13,7 @@ async function bootstrap() {
     }),
   );
 
-  // CORS para que el frontend de Next.js pueda llamar a la API
+  // CORS so the Next.js frontend can call the API
   app.enableCors({
     origin: process.env.FRONTEND_URL ?? "http://localhost:3000",
     credentials: true,
@@ -23,6 +23,6 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3001;
   await app.listen(port, "0.0.0.0");
-  Logger.log(`Server Listening on Port ${3001}/api`);
+  Logger.log(`Server listening on port ${port}/api`);
 }
 bootstrap();

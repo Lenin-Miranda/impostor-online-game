@@ -1,32 +1,32 @@
 -- ============================================================
--- Salas y jugadores
+-- Rooms and players
 --
--- Ojo a la dependencia circular:
---   players.room_id        -> rooms.id   (un jugador pertenece a una sala)
---   rooms.host_player_id   -> players.id (el anfitrión es un jugador)
+-- Watch out for the circular dependency:
+--   players.room_id        -> rooms.id   (a player belongs to a room)
+--   rooms.host_player_id   -> players.id (the host is a player)
 --
--- No se puede crear ambas FKs a la vez. Solución: creamos rooms sin
--- la FK del anfitrión, luego players, y al final añadimos la FK con ALTER.
+-- Both FKs cannot be created at once. Solution: create rooms without
+-- the host FK, then players, and finally add the FK with ALTER.
 -- ============================================================
 
 create table public.rooms (
   id              uuid primary key default gen_random_uuid(),
-  code            text not null unique,                 -- código para invitar (p.ej. 7K2P9)
+  code            text not null unique,                 -- code to invite (e.g. 7K2P9)
   status          text not null default 'lobby'
                     check (status in ('lobby', 'in_game', 'finished')),
-  host_player_id  uuid,                                  -- FK añadida más abajo
+  host_player_id  uuid,                                  -- FK added below
   settings        jsonb not null default '{
-    "impostores": 1,
-    "categoria": "Estrellas",
-    "tiempo": 5,
-    "pistas": true,
-    "maxJugadores": 10
+    "impostors": 1,
+    "category": "Stars",
+    "time": 5,
+    "hints": true,
+    "maxPlayers": 10
   }'::jsonb,
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now()
 );
 
-comment on table public.rooms is 'Salas: agrupan jugadores y partidas. settings refleja la config del lobby del FE.';
+comment on table public.rooms is 'Rooms: group players and games. settings mirrors the FE lobby config.';
 
 create table public.players (
   id          uuid primary key default gen_random_uuid(),
@@ -38,21 +38,21 @@ create table public.players (
   joined_at   timestamptz not null default now()
 );
 
-comment on table public.players is 'Jugadores conectados a una sala.';
+comment on table public.players is 'Players connected to a room.';
 
--- Buscar jugadores por sala es la consulta más común.
+-- Looking up players by room is the most common query.
 create index players_room_id_idx on public.players (room_id);
 
--- Ahora que players existe, añadimos la FK del anfitrión.
--- on delete set null: si se borra ese jugador, la sala no se rompe,
--- solo se queda sin anfitrión (el backend reasignará otro).
+-- Now that players exists, add the host FK.
+-- on delete set null: if that player is removed, the room is not broken,
+-- it is just left without a host (the backend will reassign another).
 alter table public.rooms
   add constraint rooms_host_player_id_fkey
   foreign key (host_player_id) references public.players(id) on delete set null;
 
 -- ------------------------------------------------------------
--- Trigger: mantener updated_at al día en cada UPDATE de rooms.
--- Esta función la reutilizaremos en otras tablas si hace falta.
+-- Trigger: keep updated_at fresh on every UPDATE of rooms.
+-- We will reuse this function on other tables if needed.
 -- ------------------------------------------------------------
 create or replace function public.set_updated_at()
 returns trigger
@@ -68,6 +68,6 @@ create trigger rooms_set_updated_at
   before update on public.rooms
   for each row execute function public.set_updated_at();
 
--- RLS bloqueado: todo el acceso pasa por el backend (service_role).
+-- RLS locked down: all access goes through the backend (service_role).
 alter table public.rooms enable row level security;
 alter table public.players enable row level security;
