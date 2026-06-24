@@ -1,4 +1,9 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import {
+  Injectable,
+  InternalServerErrorException,
+  ConflictException,
+  NotFoundException,
+} from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { CreateRoomDto } from "./dto/create-room.dto";
 
@@ -35,7 +40,9 @@ export class RoomsService {
       if (!data) return code; // free
     }
 
-    throw new InternalServerErrorException("Could not generate a unique room code.");
+    throw new InternalServerErrorException(
+      "Could not generate a unique room code.",
+    );
   }
 
   async createRoom(dto: CreateRoomDto) {
@@ -67,9 +74,57 @@ export class RoomsService {
       .from("rooms")
       .update({ host_player_id: player.id })
       .eq("id", room.id);
-    if (updateError) throw new InternalServerErrorException(updateError.message);
+    if (updateError)
+      throw new InternalServerErrorException(updateError.message);
 
     // 5. Return the room (with the host already set) and the player
     return { room: { ...room, host_player_id: player.id }, player };
+  }
+
+  async joinRoom(code: string, nickname: string) {
+    // 1. Search the room by code
+    const supabase = this.supabaseService.getClient();
+    const normalized = code.toUpperCase();
+
+    const { data: room, error: roomError } = await supabase
+      .from("rooms")
+      .select("*")
+      .eq("code", normalized)
+      .maybeSingle();
+
+    if (roomError) {
+      throw new InternalServerErrorException(roomError.message);
+    }
+
+    if (!room) throw new NotFoundException(`Room ${normalized} not found`);
+
+    // 2. The room must still be in the lobby (can't join a game in progress)
+    if (room.status !== "lobby") {
+      throw new ConflictException(`Room ${normalized} is already in game`);
+    }
+
+    // 3. Capacity check: count players and compare with the room's configured limit.
+    //    head: true returns only the count, without the rows.
+    const { count, error: countError } = await supabase
+      .from("players")
+      .select("id", { count: "exact", head: true })
+      .eq("room_id", room.id);
+    if (countError) throw new InternalServerErrorException(countError.message);
+
+    if ((count ?? 0) >= room.settings.maxPlayers) {
+      throw new ConflictException(`Room ${normalized} is already full`);
+    }
+
+    // 4. Insert the player with is_host: false
+    const { data: player, error: playerError } = await supabase
+      .from("players")
+      .insert({ room_id: room.id, is_host: false, nickname: nickname })
+      .select()
+      .single();
+    if (playerError) {
+      throw new InternalServerErrorException(playerError.message);
+    }
+    // 5. return room and player
+    return { room, player };
   }
 }
