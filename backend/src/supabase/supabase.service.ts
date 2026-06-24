@@ -1,6 +1,14 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { WebSocket } from 'ws';
+
+// Node 20 no incluye WebSocket global, pero supabase-js lo necesita al
+// construir el cliente (módulo realtime). Se lo proveemos con `ws`.
+const g = globalThis as { WebSocket?: unknown };
+if (typeof g.WebSocket === 'undefined') {
+  g.WebSocket = WebSocket;
+}
 
 /**
  * Cliente de Supabase con la service_role key.

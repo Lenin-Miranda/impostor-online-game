@@ -1,19 +1,20 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { NestFactory } from "@nestjs/core";
+import { AppModule } from "./app.module";
+import { Logger } from "@nestjs/common";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // CORS para que el frontend de Next.js pueda llamar a la API
   app.enableCors({
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL ?? "http://localhost:3000",
     credentials: true,
   });
 
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix("api");
 
   const port = process.env.PORT ?? 3001;
-  await app.listen(port, '0.0.0.0');
-  console.log(`🚀 Backend escuchando en http://localhost:${port}/api`);
+  await app.listen(port, "0.0.0.0");
+  Logger.log(`Server Listening on Port ${3001}/api`);
 }
 bootstrap();
