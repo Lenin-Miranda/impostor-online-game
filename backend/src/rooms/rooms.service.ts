@@ -127,4 +127,23 @@ export class RoomsService {
     // 5. return room and player
     return { room, player };
   }
+
+  async getRoom(code: string) {
+    const supabase = this.supabaseService.getClient();
+    const normalized = code.toUpperCase();
+
+    const { data: room, error } = await supabase
+      .from("rooms")
+      .select("*, players!players_room_id_fkey(*)")
+      .eq("code", normalized)
+      .maybeSingle();
+
+    if (error) throw new InternalServerErrorException(error.message);
+    if (!room)
+      throw new NotFoundException(
+        `This room does not exist, try a different code`,
+      );
+
+    return room;
+  }
 }
