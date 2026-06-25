@@ -45,7 +45,7 @@ export class GameService {
     // 3. Pick the secret footballer
     const { data: pool, error: poolError } = await supabase
       .from("footballers")
-      .select("id, name, league");
+      .select("id, name, league, hint");
     if (poolError) throw new InternalServerErrorException(poolError.message);
     if (!pool || pool.length === 0) {
       throw new InternalServerErrorException("Footballers catalog is empty");
@@ -81,7 +81,7 @@ export class GameService {
       player_id: player.id,
       role: i < impostors ? "impostor" : "crew",
       // vague hint only for the impostor, and only if the room allows hints
-      hint: i < impostors && room.settings.hints ? secret.league : null,
+      hint: i < impostors && room.settings.hints ? secret.hint : null,
     }));
 
     // 7. Insert the roles in bulk (pass the whole array)

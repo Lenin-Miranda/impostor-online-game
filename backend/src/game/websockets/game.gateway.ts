@@ -10,6 +10,8 @@ import {
 import { Logger } from "@nestjs/common";
 import { Server, Socket } from "socket.io";
 import { RoomsService } from "../../rooms/rooms.service";
+import { GameService } from "../game.service";
+import { WsException } from "@nestjs/websockets";
 
 // @WebSocketGateway monta un servidor socket.io junto al de HTTP.
 // El `cors` deja que el frontend (Next.js en :3000) se conecte.
@@ -25,7 +27,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   // Un gateway es un provider normal: puede inyectar servicios igual
   // que un controller o un service.
-  constructor(private readonly roomsService: RoomsService) {}
+  constructor(
+    private readonly roomsService: RoomsService,
+    private readonly gameService: GameService,
+  ) {}
 
   // ── Ciclo de vida de la conexión ────────────────────────────
 
@@ -79,6 +84,41 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // 4. Devolvemos un "ack" al cliente que emitió "joinRoom"
     //    (socket.io se lo entrega como respuesta a ese evento concreto).
+    return { ok: true };
+  }
+  @SubscribeMessage("startGame")
+  async startGame(
+    @MessageBody() body: { code: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const code = body.code.toUpperCase();
+
+    // (recomendado) solo el anfitrión puede iniciar.
+    // Usamos el playerId que guardamos en el socket al hacer joinRoom.
+    const room = await this.roomsService.getRoom(code);
+    if (room.host_player_id !== client.data.playerId) {
+      throw new WsException("Only the host can start the game");
+    }
+
+    // 1. Ejecuta el reparto (tu lógica del Paso 2).
+    const result = await this.gameService.startGame(code);
+
+    // 2. PRIVADO: a cada jugador, solo SU rol, por su canal personal.
+    for (const r of result.roles) {
+      const payload =
+        r.role === "crew"
+          ? { role: "crew", footballer: result.secret }
+          : { role: "impostor", hint: r.hint };
+      this.server.to(`player:${r.player_id}`).emit("yourRole", payload);
+    }
+
+    // 3. PÚBLICO: avisa a la sala que empezó (sin secretos).
+    this.server.to(code).emit("gameStarted", {
+      roundId: result.roundId,
+      number: result.number,
+      phase: "reveal",
+    });
+
     return { ok: true };
   }
 }
