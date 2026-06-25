@@ -74,21 +74,9 @@ cd backend && npm install && npm run start:dev
 cd frontend && npm install && npm run dev
 ```
 
-## Deudas técnicas conocidas
-
-- **Conteo de votos no atómico.** El disparador de "ya votaron todos" tiene una
-  carrera teórica si dos votos llegan en el mismo milisegundo (con jugadores
-  humanos no ocurre). Hardening futuro: hacerlo atómico con una función o
-  trigger de Postgres.
-- **Reconexión a mitad de partida.** Si recargas durante una ronda ves
-  "reconectando": todavía no reenviamos el rol ni la fase al reconectar.
-- **Ajustes del lobby no persistidos.** La configuración del anfitrión
-  (impostores, categoría, tiempo…) vive en el frontend; falta un endpoint
-  `PATCH /rooms/:code/settings` que la guarde y la sincronice por socket.
-
 ## Roadmap
 
-- Robustez: reconexión, manejar que un jugador o el anfitrión se vaya (reasignar host).
+- Manejar que un jugador o el anfitrión se vaya a mitad de partida (reasignar host).
 - Usar la `category` de los ajustes en el reparto (hoy el backend la ignora).
 - Auth: token JWT por jugador + guard de anfitrión en el gateway.
 - Deploy: Vercel (frontend) + host del backend (Render/Fly) + Supabase Cloud.

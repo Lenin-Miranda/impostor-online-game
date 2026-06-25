@@ -20,3 +20,12 @@ export type RoundResult = {
 export type GameEnded = { status: 'finished'; standings: Standing[] };
 
 export type Phase = 'reveal' | 'voting' | 'result';
+
+// Snapshot privado que el backend manda al (re)conectar, para restaurar pantalla.
+export type GameStateSnapshot = {
+  status: 'lobby' | 'in_game' | 'finished';
+  phase?: Phase;
+  role?: YourRole | null;
+  result?: RoundResult | null;
+  standings?: Standing[];
+};

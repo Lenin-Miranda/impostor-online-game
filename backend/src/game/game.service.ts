@@ -48,7 +48,6 @@ export class GameService {
     const players = (room.players ?? []) as Array<{ id: string }>;
     const impostors = room.settings.impostors as number;
 
-    // 1. Pick the secret footballer
     const { data: pool, error: poolError } = await supabase
       .from("footballers")
       .select("id, name, league, hint");
@@ -58,7 +57,6 @@ export class GameService {
     }
     const secret = pool[Math.floor(Math.random() * pool.length)];
 
-    // 2. Next round number
     const { count, error: countError } = await supabase
       .from("rounds")
       .select("id", { count: "exact", head: true })
@@ -66,7 +64,6 @@ export class GameService {
     if (countError) throw new InternalServerErrorException(countError.message);
     const number = (count ?? 0) + 1;
 
-    // 3. Create the round (assignments reference it via FK)
     const { data: round, error: roundError } = await supabase
       .from("rounds")
       .insert({
@@ -80,7 +77,6 @@ export class GameService {
       .single();
     if (roundError) throw new InternalServerErrorException(roundError.message);
 
-    // 4. Assign roles: shuffle, the first N are impostors
     const shuffled = this.shuffle(players);
     const assignments = shuffled.map((player, i) => ({
       round_id: round.id,
@@ -155,8 +151,9 @@ export class GameService {
   }
 
   /**
-   * A player votes for a suspect. When everyone has voted, the round
-   * result is computed automatically.
+   * A player votes for a suspect. The vote count is registered atomically
+   * (DB function with a per-round lock), so concurrent votes never miss the
+   * "everyone voted" trigger. When complete, the round result is computed.
    */
   async castVote(code: string, voterId: string, targetId: string) {
     const room = await this.roomsService.getRoom(code);
@@ -172,34 +169,40 @@ export class GameService {
     }
 
     const supabase = this.supabaseService.getClient();
-    // upsert: a player can change their vote until everyone has voted.
-    const { error } = await supabase
-      .from("votes")
-      .upsert(
-        { round_id: round.id, voter_id: voterId, target_id: targetId },
-        { onConflict: "round_id,voter_id" },
-      );
+    const { data: voted, error } = await supabase.rpc("register_vote", {
+      p_round_id: round.id,
+      p_voter_id: voterId,
+      p_target_id: targetId,
+    });
     if (error) throw new InternalServerErrorException(error.message);
 
-    const { count, error: countError } = await supabase
-      .from("votes")
-      .select("voter_id", { count: "exact", head: true })
-      .eq("round_id", round.id);
-    if (countError) throw new InternalServerErrorException(countError.message);
-
-    const voted = count ?? 0;
     const total = players.length;
-
-    if (voted >= total) {
+    if ((voted ?? 0) >= total) {
       const result = await this.computeResult(round, players);
-      return { complete: true as const, result };
+      // result is null if another concurrent vote already computed it.
+      if (result) return { complete: true as const, result };
     }
-    return { complete: false as const, voted, total };
+    return { complete: false as const, voted: (voted ?? 0) as number, total };
   }
 
-  /** Tally votes, decide the outcome, update scores and reveal everything. */
+  /**
+   * Tally votes, decide the outcome, update scores and reveal everything.
+   * Idempotent: the first caller atomically claims the round (voting ->
+   * result); any concurrent caller gets null and does NOT re-score.
+   */
   private async computeResult(round: any, players: RoomPlayer[]) {
     const supabase = this.supabaseService.getClient();
+
+    // Atomic claim: only the row still in 'voting' is flipped to 'result'.
+    const { data: claimed, error: claimError } = await supabase
+      .from("rounds")
+      .update({ phase: "result" })
+      .eq("id", round.id)
+      .eq("phase", "voting")
+      .select("id")
+      .maybeSingle();
+    if (claimError) throw new InternalServerErrorException(claimError.message);
+    if (!claimed) return null; // someone else already computed this round
 
     const { data: votes, error: votesError } = await supabase
       .from("votes")
@@ -217,13 +220,11 @@ export class GameService {
       .filter((a) => a.role === "impostor")
       .map((a) => a.player_id as string);
 
-    // Tally votes per target.
     const tally = new Map<string, number>();
     for (const v of votes ?? []) {
       tally.set(v.target_id, (tally.get(v.target_id) ?? 0) + 1);
     }
 
-    // Most voted (null on a tie => nobody is ejected).
     let ejectedId: string | null = null;
     let max = 0;
     let tie = false;
@@ -241,7 +242,6 @@ export class GameService {
     const caught = ejectedId !== null && impostorIds.includes(ejectedId);
     const outcome: "crew" | "impostor" = caught ? "crew" : "impostor";
 
-    // Scoring: crew caught the impostor -> +1 each crew; impostor survives -> +2.
     const deltas = new Map<string, number>();
     if (caught) {
       for (const p of players) {
@@ -266,20 +266,13 @@ export class GameService {
     }
     standings.sort((a, b) => b.score - a.score);
 
-    const { error: phaseError } = await supabase
-      .from("rounds")
-      .update({ phase: "result" })
-      .eq("id", round.id);
-    if (phaseError) throw new InternalServerErrorException(phaseError.message);
-
-    // Reveal the secret footballer's name.
     const { data: footballer } = await supabase
       .from("footballers")
       .select("name")
       .eq("id", round.footballer_id)
       .maybeSingle();
 
-    return {
+    const payload = {
       roundId: round.id as string,
       phase: "result" as const,
       secret: (footballer?.name as string) ?? null,
@@ -294,6 +287,15 @@ export class GameService {
       })),
       standings,
     };
+
+    // Persist the result so reconnecting players can be re-shown it.
+    const { error: storeError } = await supabase
+      .from("rounds")
+      .update({ result: payload })
+      .eq("id", round.id);
+    if (storeError) throw new InternalServerErrorException(storeError.message);
+
+    return payload;
   }
 
   /** Host starts another round once the current one is finished. */
@@ -325,5 +327,58 @@ export class GameService {
       .sort((a, b) => b.score - a.score);
 
     return { status: "finished" as const, standings };
+  }
+
+  /**
+   * Snapshot of the game for a player who (re)connects: their private role,
+   * the current phase and the result if the round is already resolved.
+   * Lets the frontend restore the right screen after a reload.
+   */
+  async getGameSnapshot(code: string, playerId: string) {
+    const room = await this.roomsService.getRoom(code);
+
+    if (room.status === "lobby") {
+      return { status: "lobby" as const };
+    }
+
+    if (room.status === "finished") {
+      const standings = ((room.players ?? []) as RoomPlayer[])
+        .map((p) => ({ playerId: p.id, nickname: p.nickname, score: p.score ?? 0 }))
+        .sort((a, b) => b.score - a.score);
+      return { status: "finished" as const, standings };
+    }
+
+    // in_game
+    const round = await this.getCurrentRound(room.id);
+    if (!round) return { status: "in_game" as const };
+
+    const supabase = this.supabaseService.getClient();
+    const { data: assignment } = await supabase
+      .from("assignments")
+      .select("role, hint")
+      .eq("round_id", round.id)
+      .eq("player_id", playerId)
+      .maybeSingle();
+
+    let role: unknown = null;
+    if (assignment) {
+      if (assignment.role === "crew") {
+        const { data: footballer } = await supabase
+          .from("footballers")
+          .select("name")
+          .eq("id", round.footballer_id)
+          .maybeSingle();
+        role = { role: "crew", footballer: footballer?.name ?? null };
+      } else {
+        role = { role: "impostor", hint: assignment.hint };
+      }
+    }
+
+    return {
+      status: "in_game" as const,
+      phase: round.phase as string,
+      role,
+      result: round.phase === "result" ? round.result : null,
+    };
   }
 }

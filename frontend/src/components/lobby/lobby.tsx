@@ -12,7 +12,13 @@ import { ResultScreen } from './result-screen';
 import { FinalStandings } from './final-standings';
 import { JoinForm } from './join-form';
 import type { Player, Settings } from './types';
-import type { YourRole, RoundResult, GameEnded, Phase } from './game-types';
+import type {
+  YourRole,
+  RoundResult,
+  GameEnded,
+  Phase,
+  GameStateSnapshot,
+} from './game-types';
 import { roomsApi, type ApiRoomWithPlayers, type ApiPlayer } from '@/lib/api';
 import { getSocket } from '@/lib/socket';
 import { getIdentity, saveIdentity } from '@/lib/identity';
@@ -69,7 +75,21 @@ export function Lobby({ code }: { code: string }) {
     if (socket.connected) join();
 
     socket.on('connect', join);
-    socket.on('roomUpdated', (r: ApiRoomWithPlayers) => setRoom(r));
+    socket.on('roomUpdated', (r: ApiRoomWithPlayers) => {
+      setRoom(r);
+      setSettings(r.settings);
+    });
+
+    // Reconexión: snapshot privado para restaurar la pantalla correcta.
+    socket.on('gameState', (s: GameStateSnapshot) => {
+      if (s.status === 'finished') {
+        setEnded({ status: 'finished', standings: s.standings ?? [] });
+        return;
+      }
+      if (s.role) setRole(s.role);
+      if (s.phase) setPhase(s.phase);
+      if (s.result) setResult(s.result);
+    });
 
     // Inicio de ronda (start o nextRound)
     socket.on('yourRole', (p: YourRole) => {
@@ -98,7 +118,7 @@ export function Lobby({ code }: { code: string }) {
     return () => {
       active = false;
       socket.off('connect', join);
-      ['roomUpdated', 'yourRole', 'gameStarted', 'phaseChanged', 'voteProgress', 'roundResult', 'gameEnded'].forEach(
+      ['roomUpdated', 'yourRole', 'gameStarted', 'phaseChanged', 'voteProgress', 'roundResult', 'gameEnded', 'gameState'].forEach(
         (e) => socket.off(e),
       );
     };
@@ -114,7 +134,8 @@ export function Lobby({ code }: { code: string }) {
   }
 
   function patchSettings(patch: Partial<Settings>) {
-    setSettings((s) => ({ ...s, ...patch }));
+    setSettings((s) => ({ ...s, ...patch })); // optimista
+    getSocket().emit('updateSettings', { code, settings: patch }); // persiste + sincroniza
   }
 
   const emit = (event: string, payload: Record<string, unknown> = {}) =>

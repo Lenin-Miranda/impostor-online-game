@@ -146,4 +146,23 @@ export class RoomsService {
 
     return room;
   }
+
+  /** Host updates the room settings (merges only known keys) and returns the room. */
+  async updateSettings(code: string, patch: Record<string, unknown>) {
+    const room = await this.getRoom(code);
+    const allowed = ["impostors", "category", "time", "hints", "maxPlayers"];
+    const merged: Record<string, unknown> = { ...room.settings };
+    for (const key of allowed) {
+      if (key in patch) merged[key] = patch[key];
+    }
+
+    const supabase = this.supabaseService.getClient();
+    const { error } = await supabase
+      .from("rooms")
+      .update({ settings: merged })
+      .eq("id", room.id);
+    if (error) throw new InternalServerErrorException(error.message);
+
+    return this.getRoom(code);
+  }
 }

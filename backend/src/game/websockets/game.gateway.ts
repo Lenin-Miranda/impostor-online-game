@@ -20,7 +20,6 @@ type RoundResult = {
   roles: { player_id: string; role: string; hint: string | null }[];
 };
 
-// @WebSocketGateway monta un servidor socket.io junto al de HTTP.
 @WebSocketGateway({
   cors: { origin: process.env.FRONTEND_URL ?? "http://localhost:3000" },
 })
@@ -54,7 +53,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   // ── Helpers ─────────────────────────────────────────────────
 
-  /** Solo el anfitrión puede ejecutar acciones de control. */
   private async assertHost(code: string, client: Socket) {
     const room = await this.roomsService.getRoom(code);
     if (room.host_player_id !== client.data.playerId) {
@@ -62,7 +60,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  /** Reparte: a cada jugador su rol en privado, y avisa a la sala. */
   private fanOutRoles(code: string, result: RoundResult) {
     for (const r of result.roles) {
       const payload =
@@ -92,6 +89,26 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.data.playerId = body.playerId;
 
     const room = await this.roomsService.getRoom(code);
+    this.server.to(code).emit("roomUpdated", room);
+
+    // Reconexión: si la partida ya empezó, restauramos el estado de ESTE
+    // jugador en privado (su rol, la fase y el resultado si aplica).
+    if (room.status !== "lobby") {
+      const snapshot = await this.gameService.getGameSnapshot(code, body.playerId);
+      client.emit("gameState", snapshot);
+    }
+
+    return { ok: true };
+  }
+
+  @SubscribeMessage("updateSettings")
+  async updateSettings(
+    @MessageBody() body: { code: string; settings: Record<string, unknown> },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const code = body.code.toUpperCase();
+    await this.assertHost(code, client);
+    const room = await this.roomsService.updateSettings(code, body.settings);
     this.server.to(code).emit("roomUpdated", room);
     return { ok: true };
   }
@@ -130,10 +147,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const outcome = await this.gameService.castVote(code, voterId, body.targetId);
 
     if (outcome.complete) {
-      // Todos votaron: revelamos el resultado a la sala.
       this.server.to(code).emit("roundResult", outcome.result);
     } else {
-      // Aún faltan votos: solo avisamos del progreso.
       this.server.to(code).emit("voteProgress", {
         voted: outcome.voted,
         total: outcome.total,
