@@ -106,7 +106,7 @@ export function Hero() {
             className="mt-9 flex flex-wrap items-center gap-3"
           >
             <Magnetic>
-              <Button href="/sala/7K2P9" size="lg">
+              <Button href="/jugar" size="lg">
                 Crear sala
                 <ArrowRight weight="bold" className="size-[18px]" />
               </Button>

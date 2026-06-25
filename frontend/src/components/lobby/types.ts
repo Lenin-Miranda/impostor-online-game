@@ -5,10 +5,11 @@ export type Player = {
   you?: boolean;
 };
 
+// Mismas claves que el backend (room.settings).
 export type Settings = {
-  impostores: number;
-  categoria: string;
-  tiempo: number; // minutos por ronda
-  pistas: boolean;
-  maxJugadores: number;
+  impostors: number;
+  category: string;
+  time: number; // minutos por ronda
+  hints: boolean;
+  maxPlayers: number;
 };

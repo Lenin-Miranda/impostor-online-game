@@ -5,7 +5,13 @@ import { SlidersHorizontal, LockSimple } from '@phosphor-icons/react';
 import { Segmented, Toggle, Stepper } from './controls';
 import type { Settings } from './types';
 
-const CATEGORIAS = ['Estrellas', 'LaLiga', 'Premier', 'Mixto'];
+// Etiqueta en español, valor igual al que entiende el backend.
+const CATEGORIES = [
+  { label: 'Estrellas', value: 'Stars' },
+  { label: 'LaLiga', value: 'LaLiga' },
+  { label: 'Premier', value: 'Premier' },
+  { label: 'Mixto', value: 'Mixed' },
+];
 
 function Row({
   label,
@@ -51,6 +57,9 @@ export function SettingsPanel({
   onChange: (patch: Partial<Settings>) => void;
   editable: boolean;
 }) {
+  const currentCategory =
+    CATEGORIES.find((c) => c.value === settings.category)?.label ?? settings.category;
+
   return (
     <section className="rounded-2xl border border-line bg-surface p-6">
       <div className="flex items-center justify-between">
@@ -72,15 +81,15 @@ export function SettingsPanel({
             editable ? (
               <Segmented
                 id="seg-impostores"
-                value={settings.impostores}
-                onChange={(v) => onChange({ impostores: v })}
+                value={settings.impostors}
+                onChange={(v) => onChange({ impostors: v })}
                 options={[
                   { label: '1', value: 1 },
                   { label: '2', value: 2 },
                 ]}
               />
             ) : (
-              <ReadOnly>{settings.impostores}</ReadOnly>
+              <ReadOnly>{settings.impostors}</ReadOnly>
             )
           }
         />
@@ -93,12 +102,12 @@ export function SettingsPanel({
             editable ? (
               <Segmented
                 id="seg-categoria"
-                value={settings.categoria}
-                onChange={(v) => onChange({ categoria: v })}
-                options={CATEGORIAS.map((c) => ({ label: c, value: c }))}
+                value={settings.category}
+                onChange={(v) => onChange({ category: v })}
+                options={CATEGORIES}
               />
             ) : (
-              <ReadOnly>{settings.categoria}</ReadOnly>
+              <ReadOnly>{currentCategory}</ReadOnly>
             )
           }
         />
@@ -111,8 +120,8 @@ export function SettingsPanel({
             editable ? (
               <Segmented
                 id="seg-tiempo"
-                value={settings.tiempo}
-                onChange={(v) => onChange({ tiempo: v })}
+                value={settings.time}
+                onChange={(v) => onChange({ time: v })}
                 options={[
                   { label: '3 min', value: 3 },
                   { label: '5 min', value: 5 },
@@ -120,7 +129,7 @@ export function SettingsPanel({
                 ]}
               />
             ) : (
-              <ReadOnly>{settings.tiempo} min</ReadOnly>
+              <ReadOnly>{settings.time} min</ReadOnly>
             )
           }
         />
@@ -130,9 +139,9 @@ export function SettingsPanel({
           hint="Dar una pista vaga en vez de nada"
           control={
             editable ? (
-              <Toggle checked={settings.pistas} onChange={(v) => onChange({ pistas: v })} />
+              <Toggle checked={settings.hints} onChange={(v) => onChange({ hints: v })} />
             ) : (
-              <ReadOnly>{settings.pistas ? 'Sí' : 'No'}</ReadOnly>
+              <ReadOnly>{settings.hints ? 'Sí' : 'No'}</ReadOnly>
             )
           }
         />
@@ -143,13 +152,13 @@ export function SettingsPanel({
           control={
             editable ? (
               <Stepper
-                value={settings.maxJugadores}
-                onChange={(v) => onChange({ maxJugadores: v })}
+                value={settings.maxPlayers}
+                onChange={(v) => onChange({ maxPlayers: v })}
                 min={4}
                 max={12}
               />
             ) : (
-              <ReadOnly>{settings.maxJugadores}</ReadOnly>
+              <ReadOnly>{settings.maxPlayers}</ReadOnly>
             )
           }
         />
