@@ -26,6 +26,10 @@ export function FinalStandings({ standings, myId }: { standings: Standing[]; myI
         <p className="mt-1 text-[15px] text-mute">gana la partida</p>
 
         <div className="mt-8 overflow-hidden rounded-2xl border border-line bg-surface text-left">
+          <div className="flex items-center justify-between border-b border-line px-5 py-2.5">
+            <span className="font-display text-xs font-medium text-mute">Jugador</span>
+            <span className="font-display text-xs font-medium text-mute">Puntos</span>
+          </div>
           {standings.map((s, i) => (
             <div
               key={s.playerId}

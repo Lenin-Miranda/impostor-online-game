@@ -61,6 +61,10 @@ export function ResultScreen({
 
         {/* Marcador */}
         <div className="mt-8 overflow-hidden rounded-2xl border border-line bg-surface text-left">
+          <div className="flex items-center justify-between border-b border-line px-5 py-2.5">
+            <span className="font-display text-xs font-medium text-mute">Jugador</span>
+            <span className="font-display text-xs font-medium text-mute">Puntos</span>
+          </div>
           {result.standings.map((s, i) => (
             <div
               key={s.playerId}

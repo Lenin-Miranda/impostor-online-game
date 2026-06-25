@@ -7,9 +7,10 @@ Juego del impostor (temática fútbol) para jugar con amigos. Monorepo con:
 - **`docker-compose.yml`** — levanta frontend + backend en local
 - **Supabase** — base de datos / auth, vía la CLI de Supabase (corre en Docker)
 
-> Esto es solo el **setup inicial**: una landing del frontend que comprueba la
-> conexión con el backend (`/api/health`) y los módulos base listos para
-> empezar a construir la lógica del juego.
+> **Estado actual:** juego jugable de principio a fin. Crear/unirse a una sala,
+> lobby en tiempo real (WebSockets), reparto de roles (el crew ve al jugador
+> secreto, el impostor solo una pista), votación, resultado con puntuación y
+> rondas múltiples hasta terminar la partida.
 
 ## Requisitos
 
@@ -73,8 +74,21 @@ cd backend && npm install && npm run start:dev
 cd frontend && npm install && npm run dev
 ```
 
-## Próximos pasos sugeridos
+## Deudas técnicas conocidas
 
-- Crear las tablas del juego (salas, jugadores, rondas) en Supabase.
-- Añadir realtime de Supabase para sincronizar a los jugadores.
-- Implementar la lógica de partida en el backend (módulo `game`).
+- **Conteo de votos no atómico.** El disparador de "ya votaron todos" tiene una
+  carrera teórica si dos votos llegan en el mismo milisegundo (con jugadores
+  humanos no ocurre). Hardening futuro: hacerlo atómico con una función o
+  trigger de Postgres.
+- **Reconexión a mitad de partida.** Si recargas durante una ronda ves
+  "reconectando": todavía no reenviamos el rol ni la fase al reconectar.
+- **Ajustes del lobby no persistidos.** La configuración del anfitrión
+  (impostores, categoría, tiempo…) vive en el frontend; falta un endpoint
+  `PATCH /rooms/:code/settings` que la guarde y la sincronice por socket.
+
+## Roadmap
+
+- Robustez: reconexión, manejar que un jugador o el anfitrión se vaya (reasignar host).
+- Usar la `category` de los ajustes en el reparto (hoy el backend la ignora).
+- Auth: token JWT por jugador + guard de anfitrión en el gateway.
+- Deploy: Vercel (frontend) + host del backend (Render/Fly) + Supabase Cloud.
