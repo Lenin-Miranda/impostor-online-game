@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SupabaseModule } from './supabase/supabase.module';
 import { RoomsModule } from './rooms/rooms.module';
+import { GameModule } from './game/game.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { RoomsModule } from './rooms/rooms.module';
     }),
     SupabaseModule,
     RoomsModule,
+    GameModule,
   ],
   controllers: [AppController],
   providers: [AppService],
