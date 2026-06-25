@@ -6,104 +6,64 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
 } from "@nestjs/websockets";
 import { Logger } from "@nestjs/common";
 import { Server, Socket } from "socket.io";
 import { RoomsService } from "../../rooms/rooms.service";
 import { GameService } from "../game.service";
-import { WsException } from "@nestjs/websockets";
+
+type RoundResult = {
+  roundId: string;
+  number: number;
+  secret: string;
+  roles: { player_id: string; role: string; hint: string | null }[];
+};
 
 // @WebSocketGateway monta un servidor socket.io junto al de HTTP.
-// El `cors` deja que el frontend (Next.js en :3000) se conecte.
 @WebSocketGateway({
   cors: { origin: process.env.FRONTEND_URL ?? "http://localhost:3000" },
 })
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  // El servidor de socket.io. Lo usamos para emitir a canales.
   @WebSocketServer()
   private server!: Server;
 
   private readonly logger = new Logger(GameGateway.name);
 
-  // Un gateway es un provider normal: puede inyectar servicios igual
-  // que un controller o un service.
   constructor(
     private readonly roomsService: RoomsService,
     private readonly gameService: GameService,
   ) {}
 
-  // ── Ciclo de vida de la conexión ────────────────────────────
+  // ── Ciclo de vida ───────────────────────────────────────────
 
-  // Se dispara cuando un cliente ABRE la conexión de socket.
   handleConnection(client: Socket) {
     this.logger.log(`socket conectado: ${client.id}`);
   }
 
-  // Se dispara cuando un cliente se DESCONECTA (cierra pestaña, pierde red...).
   handleDisconnect(client: Socket) {
-    // Recuperamos lo que guardamos en el socket al unirse (paso 2 de joinRoom).
     const { code, playerId } = client.data as {
       code?: string;
       playerId?: string;
     };
     this.logger.log(`socket desconectado: ${client.id}`);
-
-    // Si ya estaba en una sala, avisamos al resto que este jugador se fue.
     if (code && playerId) {
       this.server.to(code).emit("presence", { playerId, status: "offline" });
     }
   }
 
-  // ── Mensajes que manda el cliente ───────────────────────────
+  // ── Helpers ─────────────────────────────────────────────────
 
-  // El cliente emite "joinRoom" justo después de conectarse, mandando su
-  // código de sala y su playerId (el que le devolvió el REST al crear/unirse).
-  @SubscribeMessage("joinRoom")
-  async joinRoom(
-    @MessageBody() body: { code: string; playerId: string },
-    @ConnectedSocket() client: Socket,
-  ) {
-    const code = body.code.toUpperCase();
-
-    // 1. Unimos este socket a DOS canales (rooms de socket.io):
-    //    - `code`        -> canal de la sala, para broadcasts a todos.
-    //    - `player:<id>` -> canal personal, para mensajes privados
-    //                       (p.ej. mandarle SU rol sin que nadie más lo vea).
-    await client.join(code);
-    await client.join(`player:${body.playerId}`);
-
-    // 2. Guardamos datos en el propio socket para usarlos luego
-    //    (por ejemplo, al desconectar sabemos de qué sala era).
-    client.data.code = code;
-    client.data.playerId = body.playerId;
-
-    // 3. Leemos el estado actual de la sala y avisamos a TODOS los del canal
-    //    para que sus lobbies se refresquen con el nuevo jugador.
-    const room = await this.roomsService.getRoom(code);
-    this.server.to(code).emit("roomUpdated", room);
-
-    // 4. Devolvemos un "ack" al cliente que emitió "joinRoom"
-    //    (socket.io se lo entrega como respuesta a ese evento concreto).
-    return { ok: true };
-  }
-  @SubscribeMessage("startGame")
-  async startGame(
-    @MessageBody() body: { code: string },
-    @ConnectedSocket() client: Socket,
-  ) {
-    const code = body.code.toUpperCase();
-
-    // (recomendado) solo el anfitrión puede iniciar.
-    // Usamos el playerId que guardamos en el socket al hacer joinRoom.
+  /** Solo el anfitrión puede ejecutar acciones de control. */
+  private async assertHost(code: string, client: Socket) {
     const room = await this.roomsService.getRoom(code);
     if (room.host_player_id !== client.data.playerId) {
-      throw new WsException("Only the host can start the game");
+      throw new WsException("Only the host can do that");
     }
+  }
 
-    // 1. Ejecuta el reparto (tu lógica del Paso 2).
-    const result = await this.gameService.startGame(code);
-
-    // 2. PRIVADO: a cada jugador, solo SU rol, por su canal personal.
+  /** Reparte: a cada jugador su rol en privado, y avisa a la sala. */
+  private fanOutRoles(code: string, result: RoundResult) {
     for (const r of result.roles) {
       const payload =
         r.role === "crew"
@@ -111,14 +71,98 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           : { role: "impostor", hint: r.hint };
       this.server.to(`player:${r.player_id}`).emit("yourRole", payload);
     }
-
-    // 3. PÚBLICO: avisa a la sala que empezó (sin secretos).
     this.server.to(code).emit("gameStarted", {
       roundId: result.roundId,
       number: result.number,
       phase: "reveal",
     });
+  }
 
+  // ── Mensajes del cliente ────────────────────────────────────
+
+  @SubscribeMessage("joinRoom")
+  async joinRoom(
+    @MessageBody() body: { code: string; playerId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const code = body.code.toUpperCase();
+    await client.join(code);
+    await client.join(`player:${body.playerId}`);
+    client.data.code = code;
+    client.data.playerId = body.playerId;
+
+    const room = await this.roomsService.getRoom(code);
+    this.server.to(code).emit("roomUpdated", room);
+    return { ok: true };
+  }
+
+  @SubscribeMessage("startGame")
+  async startGame(
+    @MessageBody() body: { code: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const code = body.code.toUpperCase();
+    await this.assertHost(code, client);
+    const result = await this.gameService.startGame(code);
+    this.fanOutRoles(code, result);
+    return { ok: true };
+  }
+
+  @SubscribeMessage("goToVoting")
+  async goToVoting(
+    @MessageBody() body: { code: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const code = body.code.toUpperCase();
+    await this.assertHost(code, client);
+    const result = await this.gameService.advanceToVoting(code);
+    this.server.to(code).emit("phaseChanged", result);
+    return { ok: true };
+  }
+
+  @SubscribeMessage("castVote")
+  async castVote(
+    @MessageBody() body: { code: string; targetId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const code = body.code.toUpperCase();
+    const voterId = client.data.playerId as string;
+    const outcome = await this.gameService.castVote(code, voterId, body.targetId);
+
+    if (outcome.complete) {
+      // Todos votaron: revelamos el resultado a la sala.
+      this.server.to(code).emit("roundResult", outcome.result);
+    } else {
+      // Aún faltan votos: solo avisamos del progreso.
+      this.server.to(code).emit("voteProgress", {
+        voted: outcome.voted,
+        total: outcome.total,
+      });
+    }
+    return { ok: true };
+  }
+
+  @SubscribeMessage("nextRound")
+  async nextRound(
+    @MessageBody() body: { code: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const code = body.code.toUpperCase();
+    await this.assertHost(code, client);
+    const result = await this.gameService.nextRound(code);
+    this.fanOutRoles(code, result);
+    return { ok: true };
+  }
+
+  @SubscribeMessage("endGame")
+  async endGame(
+    @MessageBody() body: { code: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const code = body.code.toUpperCase();
+    await this.assertHost(code, client);
+    const result = await this.gameService.endGame(code);
+    this.server.to(code).emit("gameEnded", result);
     return { ok: true };
   }
 }

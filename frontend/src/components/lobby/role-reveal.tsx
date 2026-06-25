@@ -1,19 +1,26 @@
 'use client';
 
 import { motion } from 'motion/react';
-import { Eye, EyeClosed } from '@phosphor-icons/react';
-
-type YourRole =
-  | { role: 'crew'; footballer: string }
-  | { role: 'impostor'; hint: string | null };
+import { Eye, EyeClosed, ArrowRight } from '@phosphor-icons/react';
+import type { YourRole } from './game-types';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-export function RoleReveal({ role, code }: { role: YourRole; code: string }) {
+export function RoleReveal({
+  role,
+  code,
+  isHost,
+  onToVoting,
+}: {
+  role: YourRole;
+  code: string;
+  isHost: boolean;
+  onToVoting: () => void;
+}) {
   const isImpostor = role.role === 'impostor';
 
   return (
-    <div className="grid min-h-[100dvh] place-items-center px-5">
+    <div className="grid min-h-[100dvh] place-items-center px-5 py-12">
       <motion.div
         initial={{ opacity: 0, scale: 0.96, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -73,7 +80,23 @@ export function RoleReveal({ role, code }: { role: YourRole; code: string }) {
           )}
         </div>
 
-        <p className="mt-6 text-[13px] text-mute">No se lo enseñes a nadie 🤫</p>
+        {/* Control del anfitrión para avanzar a la votación */}
+        {isHost ? (
+          <motion.button
+            type="button"
+            onClick={onToVoting}
+            whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.16, ease: EASE }}
+            className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-volt font-display font-medium text-ink transition-colors hover:bg-volt-deep"
+          >
+            Pasar a votación
+            <ArrowRight weight="bold" className="size-[18px]" />
+          </motion.button>
+        ) : (
+          <p className="mt-6 text-[13px] text-mute">
+            Cuando todos lo hayan visto, el anfitrión abre la votación.
+          </p>
+        )}
       </motion.div>
     </div>
   );

@@ -7,15 +7,15 @@ import { RoomHeader } from './room-header';
 import { PlayerGrid } from './player-grid';
 import { SettingsPanel } from './settings-panel';
 import { RoleReveal } from './role-reveal';
+import { VotingScreen } from './voting-screen';
+import { ResultScreen } from './result-screen';
+import { FinalStandings } from './final-standings';
 import { JoinForm } from './join-form';
 import type { Player, Settings } from './types';
+import type { YourRole, RoundResult, GameEnded, Phase } from './game-types';
 import { roomsApi, type ApiRoomWithPlayers, type ApiPlayer } from '@/lib/api';
 import { getSocket } from '@/lib/socket';
 import { getIdentity, saveIdentity } from '@/lib/identity';
-
-type YourRole =
-  | { role: 'crew'; footballer: string }
-  | { role: 'impostor'; hint: string | null };
 
 const DEFAULT_SETTINGS: Settings = {
   impostors: 1,
@@ -35,15 +35,22 @@ export function Lobby({ code }: { code: string }) {
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [room, setRoom] = useState<ApiRoomWithPlayers | null>(null);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
-  const [role, setRole] = useState<YourRole | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // 1. ¿Tenemos identidad guardada para esta sala?
+  // Estado de la partida (lo va moviendo el socket).
+  const [role, setRole] = useState<YourRole | null>(null);
+  const [phase, setPhase] = useState<Phase | null>(null);
+  const [result, setResult] = useState<RoundResult | null>(null);
+  const [ended, setEnded] = useState<GameEnded | null>(null);
+  const [voteProgress, setVoteProgress] = useState<{ voted: number; total: number } | null>(null);
+  const [myVote, setMyVote] = useState<string | null>(null);
+
+  // 1. ¿Tenemos identidad para esta sala?
   useEffect(() => {
     setPlayerId(getIdentity(code)?.playerId ?? null);
   }, [code]);
 
-  // 2. Con identidad: cargar la sala + conectar el socket en vivo.
+  // 2. Con identidad: cargar la sala + escuchar el socket.
   useEffect(() => {
     if (!playerId) return;
     let active = true;
@@ -63,13 +70,37 @@ export function Lobby({ code }: { code: string }) {
 
     socket.on('connect', join);
     socket.on('roomUpdated', (r: ApiRoomWithPlayers) => setRoom(r));
-    socket.on('yourRole', (payload: YourRole) => setRole(payload));
+
+    // Inicio de ronda (start o nextRound)
+    socket.on('yourRole', (p: YourRole) => {
+      setRole(p);
+      setResult(null);
+      setEnded(null);
+      setPhase('reveal');
+    });
+    socket.on('gameStarted', () => {
+      setResult(null);
+      setEnded(null);
+      setMyVote(null);
+      setVoteProgress(null);
+      setPhase('reveal');
+    });
+
+    // Transiciones de fase y resultado
+    socket.on('phaseChanged', (p: { phase: Phase }) => setPhase(p.phase));
+    socket.on('voteProgress', (p: { voted: number; total: number }) => setVoteProgress(p));
+    socket.on('roundResult', (r: RoundResult) => {
+      setResult(r);
+      setPhase('result');
+    });
+    socket.on('gameEnded', (g: GameEnded) => setEnded(g));
 
     return () => {
       active = false;
       socket.off('connect', join);
-      socket.off('roomUpdated');
-      socket.off('yourRole');
+      ['roomUpdated', 'yourRole', 'gameStarted', 'phaseChanged', 'voteProgress', 'roundResult', 'gameEnded'].forEach(
+        (e) => socket.off(e),
+      );
     };
   }, [playerId, code]);
 
@@ -86,21 +117,16 @@ export function Lobby({ code }: { code: string }) {
     setSettings((s) => ({ ...s, ...patch }));
   }
 
-  function startGame() {
-    getSocket().emit('startGame', { code });
-  }
+  const emit = (event: string, payload: Record<string, unknown> = {}) =>
+    getSocket().emit(event, { code, ...payload });
+
+  // ── Vistas según el estado ────────────────────────────────────
 
   // Sin identidad → formulario para entrar.
   if (!playerId) {
     return <JoinForm code={code} onJoined={handleJoined} />;
   }
 
-  // Rol recibido → pantalla de reparto.
-  if (role) {
-    return <RoleReveal role={role} code={code} />;
-  }
-
-  // Error cargando la sala.
   if (error) {
     return (
       <div className="grid min-h-[100dvh] place-items-center px-5 text-center">
@@ -115,6 +141,54 @@ export function Lobby({ code }: { code: string }) {
     );
   }
 
+  // Máquina de estados del juego (prioridad de arriba hacia abajo).
+  if (ended) {
+    return <FinalStandings standings={ended.standings} myId={playerId} />;
+  }
+  if (result) {
+    return (
+      <ResultScreen
+        result={result}
+        players={players}
+        isHost={isAdmin}
+        myId={playerId}
+        onNextRound={() => emit('nextRound')}
+        onEndGame={() => emit('endGame')}
+      />
+    );
+  }
+  if (phase === 'voting') {
+    return (
+      <VotingScreen
+        players={players}
+        myId={playerId}
+        myVote={myVote}
+        voteProgress={voteProgress}
+        onVote={(targetId) => {
+          setMyVote(targetId);
+          emit('castVote', { targetId });
+        }}
+      />
+    );
+  }
+  if (role) {
+    return <RoleReveal role={role} code={code} isHost={isAdmin} onToVoting={() => emit('goToVoting')} />;
+  }
+
+  // En partida pero sin rol (recargaste a mitad): estado de espera.
+  if (room?.status === 'in_game') {
+    return (
+      <div className="grid min-h-[100dvh] place-items-center px-5 text-center">
+        <div>
+          <Hourglass weight="bold" className="mx-auto size-6 text-volt" />
+          <p className="mt-4 font-display text-xl font-semibold">La partida está en curso</p>
+          <p className="mt-2 text-mute">Reconectando con la sala…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Lobby (sala en espera) ────────────────────────────────────
   return (
     <div className="min-h-[100dvh]">
       <header className="border-b border-line">
@@ -148,7 +222,7 @@ export function Lobby({ code }: { code: string }) {
               <div>
                 <motion.button
                   type="button"
-                  onClick={startGame}
+                  onClick={() => emit('startGame')}
                   whileTap={{ scale: 0.98 }}
                   disabled={!canStart}
                   transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
