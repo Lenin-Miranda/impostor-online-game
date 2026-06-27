@@ -1,82 +1,82 @@
-# ⚽ Impostor Fútbol Online
+# Impostor Fútbol Online
 
-Juego del impostor (temática fútbol) para jugar con amigos. Monorepo con:
+An impostor game with a soccer theme, built to play with friends. Monorepo with:
 
 - **`frontend/`** — Next.js 15 (App Router, TypeScript, Tailwind v4)
-- **`backend/`** — NestJS 11 + cliente de Supabase
-- **`docker-compose.yml`** — levanta frontend + backend en local
-- **Supabase** — base de datos / auth, vía la CLI de Supabase (corre en Docker)
+- **`backend/`** — NestJS 11 + Supabase client
+- **`docker-compose.yml`** — runs the frontend + backend locally
+- **Supabase** — database / auth, via the Supabase CLI (runs in Docker)
 
-> **Estado actual:** juego jugable de principio a fin. Crear/unirse a una sala,
-> lobby en tiempo real (WebSockets), reparto de roles (el crew ve al jugador
-> secreto, el impostor solo una pista), votación, resultado con puntuación y
-> rondas múltiples hasta terminar la partida.
+> **Current status:** playable end to end. Create/join a room, real-time lobby
+> (WebSockets), role assignment (regular players see the secret player, the
+> impostor only gets a hint), voting, scored results, and multiple rounds until
+> the match ends.
 
-## Requisitos
+## Requirements
 
 - [Docker](https://www.docker.com/) + Docker Compose
-- [Node.js](https://nodejs.org/) 20+ (para la CLI de Supabase y comandos locales)
+- [Node.js](https://nodejs.org/) 20+ (for the Supabase CLI and local commands)
 
-## Estructura
+## Structure
 
 ```
 impostor-futbol-online/
-├── docker-compose.yml      # orquesta frontend + backend
-├── .env.example            # variables compartidas (copiar a .env)
+├── docker-compose.yml      # orchestrates frontend + backend
+├── .env.example            # shared variables (copy to .env)
 ├── frontend/               # Next.js
 └── backend/                # NestJS + Supabase
 ```
 
-## Puesta en marcha
+## Getting Started
 
-### 1. Levantar Supabase en local (opcional pero recomendado)
+### 1. Start Supabase locally (optional but recommended)
 
-La CLI de Supabase arranca su propio stack en Docker (Postgres, Auth, Studio…):
+The Supabase CLI starts its own Docker stack (Postgres, Auth, Studio...):
 
 ```bash
-npx supabase init    # solo la primera vez, genera la carpeta supabase/
-npx supabase start   # imprime API URL, anon key y service_role key
+npx supabase init    # only the first time, creates the supabase/ folder
+npx supabase start   # prints the API URL, anon key, and service_role key
 ```
 
-Apunta las claves que imprime: las necesitas para el `.env`.
-Studio queda en http://localhost:54323.
+Save the keys it prints: you will need them for `.env`.
+Studio will be available at http://localhost:54323.
 
-> Si prefieres usar un proyecto **Supabase Cloud**, omite este paso y usa la
-> URL y claves de tu proyecto en el dashboard.
+> If you prefer to use a **Supabase Cloud** project, skip this step and use your
+> project URL and keys from the dashboard.
 
-### 2. Configurar variables de entorno
+### 2. Configure environment variables
 
 ```bash
 cp .env.example .env
 ```
 
-Rellena en `.env` los valores con las claves de Supabase del paso anterior.
+Fill in `.env` with the Supabase values from the previous step.
 
-### 3. Levantar la app con Docker
+### 3. Start the app with Docker
 
 ```bash
 docker compose up --build
 ```
 
 - Frontend: http://localhost:3000
-- Backend:  http://localhost:3001/api/health
+- Backend: http://localhost:3001/api/health
 
-El código está montado como volumen, así que el **hot-reload** funciona en
-ambos servicios al editar archivos.
+The code is mounted as a volume, so **hot reload** works in both services when
+you edit files.
 
-## Desarrollo sin Docker (alternativa)
+## Development Without Docker (Alternative)
 
 ```bash
 # Backend
 cd backend && npm install && npm run start:dev
 
-# Frontend (en otra terminal)
+# Frontend (in another terminal)
 cd frontend && npm install && npm run dev
 ```
 
 ## Roadmap
 
-- Manejar que un jugador o el anfitrión se vaya a mitad de partida (reasignar host).
-- Usar la `category` de los ajustes en el reparto (hoy el backend la ignora).
-- Auth: token JWT por jugador + guard de anfitrión en el gateway.
-- Deploy: Vercel (frontend) + host del backend (Render/Fly) + Supabase Cloud.
+- Handle a player or host leaving mid-match (reassign host).
+- Use the `category` setting during role assignment (the backend currently ignores it).
+- Auth: JWT token per player + host guard in the gateway.
+- Deploy: Vercel (frontend) + backend host (Render/Fly) + Supabase Cloud.

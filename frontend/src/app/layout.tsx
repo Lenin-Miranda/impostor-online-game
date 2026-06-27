@@ -15,6 +15,14 @@ export const metadata: Metadata = {
   description:
     'Reparte jugadores, esconde a un impostor y descúbrelo antes de que marque. El juego del impostor con temática de fútbol para jugar en grupo.',
   metadataBase: new URL('https://impostor-online-game.vercel.app'),
+  icons: {
+    icon: [
+      { url: '/favicon.ico?v=2', type: 'image/x-icon', sizes: '16x16 32x32' },
+      { url: '/icon.png?v=2', type: 'image/png', sizes: '1024x1024' },
+    ],
+    shortcut: ['/favicon.ico?v=2'],
+    apple: [{ url: '/apple-icon.png?v=2', type: 'image/png', sizes: '1024x1024' }],
+  },
   openGraph: {
     title: 'Impostor Fútbol',
     description:
