@@ -8,7 +8,8 @@ let socket: Socket | null = null;
 export function getSocket(): Socket {
   if (!socket) {
     socket = io(API_URL, {
-      transports: ['websocket'],
+      // Prioriza WebSocket, pero deja fallback a polling detrás de proxies.
+      transports: ['websocket', 'polling'],
       autoConnect: true,
     });
   }
