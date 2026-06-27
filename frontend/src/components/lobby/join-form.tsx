@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { ArrowRight } from '@phosphor-icons/react';
 import { roomsApi, type ApiPlayer } from '@/lib/api';
+import { BrandIcon } from '../ui/brand';
 
 export function JoinForm({
   code,
@@ -34,14 +35,15 @@ export function JoinForm({
   }
 
   return (
-    <div className="grid min-h-[100dvh] place-items-center px-5">
+    <div className="flex min-h-[100dvh] items-center justify-center px-5">
       <motion.form
         onSubmit={submit}
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-[400px]"
+        className="w-[calc(100vw-4rem)] max-w-[400px]"
       >
+        <BrandIcon className="mb-8 h-14 w-14 shadow-[0_20px_60px_-24px_var(--color-volt)]" />
         <p className="font-display text-sm uppercase tracking-[0.2em] text-volt">Sala {code}</p>
         <h1 className="mt-3 font-display text-3xl font-bold tracking-tight">Entra a la sala</h1>
         <p className="mt-2 text-[15px] text-mute">Elige un nombre para que tu grupo te reconozca.</p>

@@ -6,6 +6,7 @@ import { motion } from 'motion/react';
 import { ArrowRight } from '@phosphor-icons/react';
 import { roomsApi } from '@/lib/api';
 import { saveIdentity } from '@/lib/identity';
+import { BrandLogo } from '@/components/ui/brand';
 
 type Mode = 'create' | 'join';
 
@@ -66,21 +67,14 @@ export default function JugarPage() {
   );
 
   return (
-    <div className="grid min-h-[100dvh] place-items-center px-5">
+    <div className="flex min-h-[100dvh] items-center justify-center px-5">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-[420px]"
+        className="w-[calc(100vw-4rem)] max-w-[420px]"
       >
-        <a href="/" className="flex items-center gap-2.5">
-          <span className="grid h-7 w-7 place-items-center rounded-md bg-volt font-display text-sm font-bold text-ink">
-            11
-          </span>
-          <span className="font-display text-[15px] font-semibold tracking-tight">
-            Impostor<span className="text-mute">.fútbol</span>
-          </span>
-        </a>
+        <BrandLogo />
 
         <div className="mt-8 flex rounded-full border border-line bg-ink-2 p-1">
           {tab('create', 'Crear sala')}

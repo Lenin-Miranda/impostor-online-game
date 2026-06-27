@@ -22,6 +22,7 @@ import type {
 import { roomsApi, type ApiRoomWithPlayers, type ApiPlayer } from '@/lib/api';
 import { getSocket } from '@/lib/socket';
 import { getIdentity, saveIdentity } from '@/lib/identity';
+import { BrandLogo } from '../ui/brand';
 
 const DEFAULT_SETTINGS: Settings = {
   impostors: 1,
@@ -214,14 +215,7 @@ export function Lobby({ code }: { code: string }) {
     <div className="min-h-[100dvh]">
       <header className="border-b border-line">
         <div className="mx-auto flex h-16 max-w-[1100px] items-center justify-between px-5 sm:px-8">
-          <a href="/" className="flex items-center gap-2.5">
-            <span className="grid h-7 w-7 place-items-center rounded-md bg-volt font-display text-sm font-bold text-ink">
-              11
-            </span>
-            <span className="font-display text-[15px] font-semibold tracking-tight">
-              Impostor<span className="text-mute">.fútbol</span>
-            </span>
-          </a>
+          <BrandLogo />
         </div>
       </header>
 

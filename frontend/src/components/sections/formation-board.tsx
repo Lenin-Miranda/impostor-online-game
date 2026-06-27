@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { motion, useReducedMotion, type Variants } from 'motion/react';
 import { ScrambleText } from '../ui/scramble';
 
@@ -54,6 +55,14 @@ export function FormationBoard() {
         <div className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border border-line" />
         <div className="absolute inset-3 rounded-xl border border-line/60" />
       </div>
+
+      <Image
+        src="/impostor-futbol-once-isotipo.png"
+        alt=""
+        width={210}
+        height={225}
+        className="pointer-events-none absolute left-1/2 top-1/2 z-[1] w-[44%] max-w-[184px] -translate-x-1/2 -translate-y-1/2 opacity-[0.08]"
+      />
 
       {/* Etiqueta de sala */}
       <div className="absolute left-4 top-4 z-10 flex items-center gap-2 font-display text-xs text-mute">

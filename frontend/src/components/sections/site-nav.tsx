@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Button } from '../ui/button';
+import { BrandLogo } from '../ui/brand';
 
 const LINKS = [
   { label: 'Cómo se juega', href: '#como-se-juega' },
@@ -32,14 +33,7 @@ export function SiteNav() {
           scrolled ? 'border-b border-line bg-ink/80 backdrop-blur-md' : 'border-b border-transparent'
         }`}
       >
-        <a href="#top" className="group flex items-center gap-2.5">
-          <span className="grid h-7 w-7 place-items-center rounded-md bg-volt font-display text-sm font-bold text-ink">
-            11
-          </span>
-          <span className="font-display text-[15px] font-semibold tracking-tight">
-            Impostor<span className="text-mute">.fútbol</span>
-          </span>
-        </a>
+        <BrandLogo href="#top" />
 
         <nav className="hidden items-center gap-8 md:flex">
           {LINKS.map((l) => (

@@ -14,11 +14,20 @@ export const metadata: Metadata = {
   title: 'Impostor Fútbol · El juego del impostor para jugar con amigos',
   description:
     'Reparte jugadores, esconde a un impostor y descúbrelo antes de que marque. El juego del impostor con temática de fútbol para jugar en grupo.',
+  metadataBase: new URL('https://impostor-online-game.vercel.app'),
   openGraph: {
     title: 'Impostor Fútbol',
     description:
       'El juego del impostor con temática de fútbol. Crea una sala, comparte el código y caza al impostor.',
     type: 'website',
+    images: ['/impostor-futbol-once-lockup.png'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Impostor Fútbol',
+    description:
+      'El juego del impostor con temática de fútbol. Crea una sala, comparte el código y caza al impostor.',
+    images: ['/impostor-futbol-once-lockup.png'],
   },
 };
 

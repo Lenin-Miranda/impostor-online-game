@@ -10,6 +10,7 @@ import {
 import { ArrowRight, PlayCircle } from "@phosphor-icons/react";
 import { Button } from "../ui/button";
 import { Magnetic } from "../ui/magnetic";
+import { BrandLockup } from "../ui/brand";
 import { FormationBoard } from "./formation-board";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -61,6 +62,16 @@ export function Hero() {
       <div className="relative z-10 mx-auto grid w-full max-w-[1200px] items-center gap-14 px-5 sm:px-8 lg:grid-cols-[1.05fr_0.95fr]">
         {/* Columna de texto */}
         <div>
+          <motion.div
+            custom={0}
+            variants={reduce ? undefined : fade}
+            initial={reduce ? false : "hidden"}
+            animate={reduce ? false : "show"}
+            className="mb-8"
+          >
+            <BrandLockup priority className="w-[min(260px,72vw)] opacity-95" />
+          </motion.div>
+
           <h1 className="font-display text-[clamp(2.6rem,7vw,5rem)] font-bold leading-[0.98] tracking-[-0.03em]">
             <span className="block overflow-hidden">
               <motion.span
@@ -88,7 +99,7 @@ export function Hero() {
           </h1>
 
           <motion.p
-            custom={0}
+            custom={1}
             variants={reduce ? undefined : fade}
             initial={reduce ? false : "hidden"}
             animate={reduce ? false : "show"}
@@ -99,7 +110,7 @@ export function Hero() {
           </motion.p>
 
           <motion.div
-            custom={1}
+            custom={2}
             variants={reduce ? undefined : fade}
             initial={reduce ? false : "hidden"}
             animate={reduce ? false : "show"}
