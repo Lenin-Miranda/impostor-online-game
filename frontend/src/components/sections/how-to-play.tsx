@@ -6,7 +6,7 @@ const STEPS = [
   {
     n: '01',
     title: 'Crea una sala',
-    body: 'Pulsa Crear sala y comparte el código de 5 dígitos. Tu grupo entra desde el móvil, sin instalar nada.',
+    body: 'Toca Crear sala y comparte el código de 5 dígitos. Tu grupo entra desde el celular, sin instalar nada.',
   },
   {
     n: '02',

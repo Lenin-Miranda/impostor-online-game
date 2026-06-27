@@ -35,7 +35,7 @@ export function FinalCta() {
               </Button>
             </Magnetic>
             <p className="font-display text-sm text-mute">
-              Gratis, sin cuenta, desde el móvil
+              Gratis, sin cuenta, desde el celular
             </p>
           </div>
         </Reveal>

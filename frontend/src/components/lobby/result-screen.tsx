@@ -47,7 +47,7 @@ export function ResultScreen({
             crewWon ? 'text-volt' : 'text-impostor'
           }`}
         >
-          {crewWon ? '¡Pillaron al impostor!' : 'El impostor sobrevivió'}
+          {crewWon ? '¡Atraparon al impostor!' : 'El impostor sobrevivió'}
         </h1>
 
         <p className="mt-3 text-[15px] text-mute">

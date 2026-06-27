@@ -34,13 +34,13 @@ export function TheTwist() {
         <Reveal className="max-w-[24ch]">
           <h2 className="font-display text-4xl font-bold leading-[1.0] tracking-tight sm:text-6xl">
             El impostor no sabe nada.
-            <span className="text-impostor"> Y aun así tiene que colártela.</span>
+            <span className="text-impostor"> Y aun así tiene que hacerse pasar por uno más.</span>
           </h2>
         </Reveal>
         <Reveal delay={0.1} className="mt-7 max-w-[58ch]">
           <p className="text-lg leading-relaxed text-mute">
             Recibe una pista vaga y nada más. Tiene que leer la mesa, fingir que
-            sabe y desviar la sospecha. Cuando funciona, es oro. Cuando lo pillas,
+            sabe y desviar la sospecha. Cuando funciona, es oro. Cuando lo descubres,
             también. Ese es todo el juego.
           </p>
         </Reveal>

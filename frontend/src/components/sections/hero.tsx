@@ -95,7 +95,7 @@ export function Hero() {
             className="mt-7 max-w-[46ch] text-lg leading-relaxed text-mute"
           >
             El juego del impostor en clave fútbol. Todos reciben un jugador
-            secreto. Uno no. Descúbrelo antes de que la cuele.
+            secreto. Uno no. Descúbrelo antes de que se salga con la suya.
           </motion.p>
 
           <motion.div
