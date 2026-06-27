@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { Play, Hourglass } from '@phosphor-icons/react';
 import { RoomHeader } from './room-header';
@@ -32,10 +32,26 @@ const DEFAULT_SETTINGS: Settings = {
   maxPlayers: 10,
 };
 
+const SETTINGS_SYNC_DELAY_MS = 150;
+
+type SettingsPatch = Partial<Settings>;
+type SettingsKey = keyof Settings;
+type SettingsValue = Settings[SettingsKey];
+
 function toPlayers(room: ApiRoomWithPlayers, myId: string | null): Player[] {
   return [...room.players]
     .sort((a, b) => a.joined_at.localeCompare(b.joined_at))
     .map((p) => ({ id: p.id, name: p.nickname, host: p.is_host, you: p.id === myId }));
+}
+
+function remainingPendingSettings(serverSettings: Settings, pending: SettingsPatch): SettingsPatch {
+  const nextPending: Partial<Record<SettingsKey, SettingsValue>> = {};
+  for (const [key, value] of Object.entries(pending) as [SettingsKey, SettingsValue][]) {
+    if (!Object.is(serverSettings[key], value)) {
+      nextPending[key] = value;
+    }
+  }
+  return nextPending as SettingsPatch;
 }
 
 export function Lobby({ code }: { code: string }) {
@@ -43,6 +59,8 @@ export function Lobby({ code }: { code: string }) {
   const [room, setRoom] = useState<ApiRoomWithPlayers | null>(null);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [error, setError] = useState<string | null>(null);
+  const pendingSettingsRef = useRef<SettingsPatch>({});
+  const settingsSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Estado de la partida (lo va moviendo el socket).
   const [role, setRole] = useState<YourRole | null>(null);
@@ -51,6 +69,24 @@ export function Lobby({ code }: { code: string }) {
   const [ended, setEnded] = useState<GameEnded | null>(null);
   const [voteProgress, setVoteProgress] = useState<{ voted: number; total: number } | null>(null);
   const [myVote, setMyVote] = useState<string | null>(null);
+
+  const applyRoomSnapshot = useCallback((snapshot: ApiRoomWithPlayers) => {
+    setRoom(snapshot);
+    const pending = remainingPendingSettings(snapshot.settings, pendingSettingsRef.current);
+    pendingSettingsRef.current = pending;
+    setSettings({ ...snapshot.settings, ...pending });
+  }, []);
+
+  const flushPendingSettings = useCallback(() => {
+    if (settingsSyncTimerRef.current) {
+      clearTimeout(settingsSyncTimerRef.current);
+      settingsSyncTimerRef.current = null;
+    }
+
+    const pending = pendingSettingsRef.current;
+    if (Object.keys(pending).length === 0) return;
+    getSocket().emit('updateSettings', { code, settings: pending });
+  }, [code]);
 
   // 1. ¿Tenemos identidad para esta sala?
   useEffect(() => {
@@ -66,8 +102,7 @@ export function Lobby({ code }: { code: string }) {
       .get(code)
       .then((r) => {
         if (!active) return;
-        setRoom(r);
-        setSettings(r.settings);
+        applyRoomSnapshot(r);
       })
       .catch((e) => active && setError(e.message));
 
@@ -77,8 +112,7 @@ export function Lobby({ code }: { code: string }) {
 
     socket.on('connect', join);
     socket.on('roomUpdated', (r: ApiRoomWithPlayers) => {
-      setRoom(r);
-      setSettings(r.settings);
+      applyRoomSnapshot(r);
     });
 
     // Reconexión: snapshot privado para restaurar la pantalla correcta.
@@ -123,7 +157,15 @@ export function Lobby({ code }: { code: string }) {
         (e) => socket.off(e),
       );
     };
-  }, [playerId, code]);
+  }, [playerId, code, applyRoomSnapshot]);
+
+  useEffect(() => {
+    return () => {
+      if (settingsSyncTimerRef.current) {
+        clearTimeout(settingsSyncTimerRef.current);
+      }
+    };
+  }, []);
 
   const players = useMemo(() => (room ? toPlayers(room, playerId) : []), [room, playerId]);
   const isAdmin = !!room && !!playerId && room.host_player_id === playerId;
@@ -135,8 +177,13 @@ export function Lobby({ code }: { code: string }) {
   }
 
   function patchSettings(patch: Partial<Settings>) {
-    setSettings((s) => ({ ...s, ...patch })); // optimista
-    getSocket().emit('updateSettings', { code, settings: patch }); // persiste + sincroniza
+    pendingSettingsRef.current = { ...pendingSettingsRef.current, ...patch };
+    setSettings((s) => ({ ...s, ...patch }));
+
+    if (settingsSyncTimerRef.current) {
+      clearTimeout(settingsSyncTimerRef.current);
+    }
+    settingsSyncTimerRef.current = setTimeout(flushPendingSettings, SETTINGS_SYNC_DELAY_MS);
   }
 
   const emit = (event: string, payload: Record<string, unknown> = {}) =>
@@ -237,7 +284,10 @@ export function Lobby({ code }: { code: string }) {
               <div>
                 <motion.button
                   type="button"
-                  onClick={() => emit('startGame')}
+                  onClick={() => {
+                    flushPendingSettings();
+                    emit('startGame');
+                  }}
                   whileTap={{ scale: 0.98 }}
                   disabled={!canStart}
                   transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
