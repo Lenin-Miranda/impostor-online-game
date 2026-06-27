@@ -4,14 +4,11 @@ import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Button } from '../ui/button';
 import { BrandLogo } from '../ui/brand';
-
-const LINKS = [
-  { label: 'Cómo se juega', href: '#como-se-juega' },
-  { label: 'El juego', href: '#el-juego' },
-  { label: 'El twist', href: '#el-twist' },
-];
+import { LanguageToggle } from '../ui/language-toggle';
+import { useI18n } from '@/i18n';
 
 export function SiteNav() {
+  const { t } = useI18n();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -20,6 +17,12 @@ export function SiteNav() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  const links = [
+    { label: t('nav.howToPlay'), href: '#como-se-juega' },
+    { label: t('nav.theGame'), href: '#el-juego' },
+    { label: t('nav.theTwist'), href: '#el-twist' },
+  ];
 
   return (
     <motion.header
@@ -36,7 +39,7 @@ export function SiteNav() {
         <BrandLogo href="#top" />
 
         <nav className="hidden items-center gap-8 md:flex">
-          {LINKS.map((l) => (
+          {links.map((l) => (
             <a
               key={l.href}
               href={l.href}
@@ -47,7 +50,10 @@ export function SiteNav() {
           ))}
         </nav>
 
-        <Button href="/jugar">Crear sala</Button>
+        <div className="flex items-center gap-3">
+          <LanguageToggle />
+          <Button href="/jugar">{t('nav.createRoom')}</Button>
+        </div>
       </div>
     </motion.header>
   );

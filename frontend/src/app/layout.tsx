@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import { Space_Grotesk } from 'next/font/google';
+import { LanguageProvider } from '@/i18n';
 import './globals.css';
 
 const grotesk = Space_Grotesk({
@@ -46,7 +47,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={`${GeistSans.variable} ${grotesk.variable}`}>
-      <body>{children}</body>
+      <body>
+        <LanguageProvider>{children}</LanguageProvider>
+      </body>
     </html>
   );
 }

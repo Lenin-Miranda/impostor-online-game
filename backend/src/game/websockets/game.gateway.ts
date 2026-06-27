@@ -13,11 +13,13 @@ import { Server, Socket } from "socket.io";
 import { RoomsService } from "../../rooms/rooms.service";
 import { GameService } from "../game.service";
 
+type HintI18n = { es: string; en: string };
+
 type RoundResult = {
   roundId: string;
   number: number;
   secret: string;
-  roles: { player_id: string; role: string; hint: string | null }[];
+  roles: { player_id: string; role: string; hint: HintI18n | null }[];
 };
 
 @WebSocketGateway({

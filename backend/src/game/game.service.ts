@@ -50,7 +50,7 @@ export class GameService {
 
     const { data: pool, error: poolError } = await supabase
       .from("footballers")
-      .select("id, name, league, hint");
+      .select("id, name, league, hint, hint_en");
     if (poolError) throw new InternalServerErrorException(poolError.message);
     if (!pool || pool.length === 0) {
       throw new InternalServerErrorException("Footballers catalog is empty");
@@ -78,27 +78,34 @@ export class GameService {
     if (roundError) throw new InternalServerErrorException(roundError.message);
 
     const shuffled = this.shuffle(players);
-    const assignments = shuffled.map((player, i) => ({
-      round_id: round.id,
-      player_id: player.id,
-      role: i < impostors ? "impostor" : "crew",
-      hint: i < impostors && room.settings.hints ? secret.hint : null,
-    }));
+    const roles = shuffled.map((player, i) => {
+      const isImpostor = i < impostors;
+      return {
+        player_id: player.id,
+        role: isImpostor ? "impostor" : "crew",
+        // Bilingual hint { es, en } for the impostor; the client renders it
+        // in the player's language. en falls back to es when not translated.
+        hint:
+          isImpostor && room.settings.hints
+            ? { es: secret.hint, en: secret.hint_en ?? secret.hint }
+            : null,
+      };
+    });
 
-    const { error: assignError } = await supabase
-      .from("assignments")
-      .insert(assignments);
+    const { error: assignError } = await supabase.from("assignments").insert(
+      roles.map((r) => ({
+        round_id: round.id,
+        player_id: r.player_id,
+        role: r.role,
+      })),
+    );
     if (assignError) throw new InternalServerErrorException(assignError.message);
 
     return {
       roundId: round.id,
       number,
       secret: secret.name as string,
-      roles: assignments.map((a) => ({
-        player_id: a.player_id,
-        role: a.role,
-        hint: a.hint,
-      })),
+      roles,
     };
   }
 
@@ -355,22 +362,27 @@ export class GameService {
     const supabase = this.supabaseService.getClient();
     const { data: assignment } = await supabase
       .from("assignments")
-      .select("role, hint")
+      .select("role")
       .eq("round_id", round.id)
       .eq("player_id", playerId)
       .maybeSingle();
 
     let role: unknown = null;
     if (assignment) {
+      const { data: footballer } = await supabase
+        .from("footballers")
+        .select("name, hint, hint_en")
+        .eq("id", round.footballer_id)
+        .maybeSingle();
       if (assignment.role === "crew") {
-        const { data: footballer } = await supabase
-          .from("footballers")
-          .select("name")
-          .eq("id", round.footballer_id)
-          .maybeSingle();
         role = { role: "crew", footballer: footballer?.name ?? null };
+      } else if (room.settings.hints && footballer) {
+        role = {
+          role: "impostor",
+          hint: { es: footballer.hint, en: footballer.hint_en ?? footballer.hint },
+        };
       } else {
-        role = { role: "impostor", hint: assignment.hint };
+        role = { role: "impostor", hint: null };
       }
     }
 

@@ -1,6 +1,8 @@
+export type Hint = { es: string; en: string };
+
 export type YourRole =
   | { role: 'crew'; footballer: string }
-  | { role: 'impostor'; hint: string | null };
+  | { role: 'impostor'; hint: Hint | null };
 
 export type Standing = { playerId: string; nickname: string; score: number };
 

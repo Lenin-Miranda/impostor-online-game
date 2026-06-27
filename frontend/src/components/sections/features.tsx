@@ -8,6 +8,7 @@ import {
   SoccerBall,
 } from "@phosphor-icons/react";
 import { Reveal, RevealGroup, RevealItem } from "../ui/reveal";
+import { useI18n } from "@/i18n";
 
 const POOL = [
   "Messi",
@@ -29,6 +30,7 @@ const cardBase =
   "group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-line bg-surface p-7 transition-colors duration-300 hover:border-bone/20";
 
 export function Features() {
+  const { t } = useI18n();
   return (
     <section
       id="el-juego"
@@ -36,10 +38,10 @@ export function Features() {
     >
       <Reveal className="max-w-[40ch]">
         <p className="font-display text-sm uppercase tracking-[0.2em] text-volt">
-          El juego
+          {t("features.eyebrow")}
         </p>
         <h2 className="mt-4 font-display text-4xl font-bold leading-[1.02] tracking-tight sm:text-5xl">
-          Pensado para la mesa, no para el tutorial.
+          {t("features.heading")}
         </h2>
       </Reveal>
 
@@ -55,11 +57,10 @@ export function Features() {
             <div>
               <SoccerBall weight="fill" className="size-7 text-volt" />
               <h3 className="mt-5 font-display text-2xl font-semibold tracking-tight">
-                Cientos de jugadores reales
+                {t("features.poolTitle")}
               </h3>
               <p className="mt-2 max-w-[42ch] text-[15px] leading-relaxed text-mute">
-                LaLiga, Premier, Serie A, Champions y leyendas. El jugador
-                secreto cambia cada ronda, así nadie se lo aprende.
+                {t("features.poolBody")}
               </p>
             </div>
             <div className="mt-8 flex flex-wrap gap-2">
@@ -85,11 +86,9 @@ export function Features() {
             <UsersThree weight="bold" className="size-6 text-bone" />
             <div className="mt-6">
               <p className="font-display text-5xl font-bold leading-none">
-                4-12
+                {t("features.playersValue")}
               </p>
-              <p className="mt-2 text-[15px] text-mute">
-                jugadores por sala. Ideal para una previa o una cena.
-              </p>
+              <p className="mt-2 text-[15px] text-mute">{t("features.playersBody")}</p>
             </div>
           </article>
         </RevealItem>
@@ -100,11 +99,9 @@ export function Features() {
             <Browser weight="bold" className="size-6 text-bone" />
             <div className="mt-6">
               <h3 className="font-display text-lg font-semibold tracking-tight">
-                Solo el navegador
+                {t("features.browserTitle")}
               </h3>
-              <p className="mt-2 text-[15px] text-mute">
-                Nada que instalar. Abres el enlace y juegas.
-              </p>
+              <p className="mt-2 text-[15px] text-mute">{t("features.browserBody")}</p>
             </div>
           </article>
         </RevealItem>
@@ -115,11 +112,9 @@ export function Features() {
             <Timer weight="bold" className="size-6 text-bone" />
             <div className="mt-6">
               <h3 className="font-display text-lg font-semibold tracking-tight">
-                Rondas de 5 a 10 minutos
+                {t("features.roundsTitle")}
               </h3>
-              <p className="mt-2 max-w-[38ch] text-[15px] text-mute">
-                Partidas cortas y adictivas. Una más, y luego otra más.
-              </p>
+              <p className="mt-2 max-w-[38ch] text-[15px] text-mute">{t("features.roundsBody")}</p>
             </div>
           </article>
         </RevealItem>
@@ -130,11 +125,9 @@ export function Features() {
             <LockKey weight="bold" className="size-6 text-bone" />
             <div className="mt-6">
               <h3 className="font-display text-lg font-semibold tracking-tight">
-                Salas privadas
+                {t("features.privateTitle")}
               </h3>
-              <p className="mt-2 max-w-[38ch] text-[15px] text-mute">
-                Un código y solo entra tu gente. Sin desconocidos en la mesa.
-              </p>
+              <p className="mt-2 max-w-[38ch] text-[15px] text-mute">{t("features.privateBody")}</p>
             </div>
           </article>
         </RevealItem>

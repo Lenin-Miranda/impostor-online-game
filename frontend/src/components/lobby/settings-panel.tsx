@@ -3,15 +3,8 @@
 import type { ReactNode } from 'react';
 import { SlidersHorizontal, LockSimple } from '@phosphor-icons/react';
 import { Segmented, Toggle, Stepper } from './controls';
+import { useI18n } from '@/i18n';
 import type { Settings } from './types';
-
-// Etiqueta en español, valor igual al que entiende el backend.
-const CATEGORIES = [
-  { label: 'Estrellas', value: 'Stars' },
-  { label: 'LaLiga', value: 'LaLiga' },
-  { label: 'Premier', value: 'Premier' },
-  { label: 'Mixto', value: 'Mixed' },
-];
 
 function Row({
   label,
@@ -57,26 +50,35 @@ export function SettingsPanel({
   onChange: (patch: Partial<Settings>) => void;
   editable: boolean;
 }) {
+  const { t } = useI18n();
+
+  // Etiqueta traducida, valor igual al que entiende el backend.
+  const categories = [
+    { label: t('settings.catStars'), value: 'Stars' },
+    { label: 'LaLiga', value: 'LaLiga' },
+    { label: 'Premier', value: 'Premier' },
+    { label: t('settings.catMixed'), value: 'Mixed' },
+  ];
   const currentCategory =
-    CATEGORIES.find((c) => c.value === settings.category)?.label ?? settings.category;
+    categories.find((c) => c.value === settings.category)?.label ?? settings.category;
 
   return (
     <section className="rounded-2xl border border-line bg-surface p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <SlidersHorizontal weight="bold" className="size-5 text-volt" />
-          <h2 className="font-display text-lg font-semibold tracking-tight">Configuración</h2>
+          <h2 className="font-display text-lg font-semibold tracking-tight">{t('settings.title')}</h2>
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-xs text-mute">
           <LockSimple weight="bold" className="size-3" />
-          Solo el anfitrión
+          {t('settings.hostOnly')}
         </span>
       </div>
 
       <div className="mt-2 divide-y divide-line">
         <Row
-          label="Impostores"
-          hint="Cuántos jugadores reciben solo una pista"
+          label={t('settings.impostorsLabel')}
+          hint={t('settings.impostorsHint')}
           control={
             editable ? (
               <Segmented
@@ -95,8 +97,8 @@ export function SettingsPanel({
         />
 
         <Row
-          label="Jugador secreto"
-          hint="De dónde sale el futbolista de cada ronda"
+          label={t('settings.secretLabel')}
+          hint={t('settings.secretHint')}
           stack
           control={
             editable ? (
@@ -104,7 +106,7 @@ export function SettingsPanel({
                 id="seg-categoria"
                 value={settings.category}
                 onChange={(v) => onChange({ category: v })}
-                options={CATEGORIES}
+                options={categories}
               />
             ) : (
               <ReadOnly>{currentCategory}</ReadOnly>
@@ -113,8 +115,8 @@ export function SettingsPanel({
         />
 
         <Row
-          label="Tiempo por ronda"
-          hint="Minutos para debatir antes de votar"
+          label={t('settings.timeLabel')}
+          hint={t('settings.timeHint')}
           stack
           control={
             editable ? (
@@ -123,32 +125,34 @@ export function SettingsPanel({
                 value={settings.time}
                 onChange={(v) => onChange({ time: v })}
                 options={[
-                  { label: '3 min', value: 3 },
-                  { label: '5 min', value: 5 },
-                  { label: '8 min', value: 8 },
+                  { label: `3 ${t('settings.min')}`, value: 3 },
+                  { label: `5 ${t('settings.min')}`, value: 5 },
+                  { label: `8 ${t('settings.min')}`, value: 8 },
                 ]}
               />
             ) : (
-              <ReadOnly>{settings.time} min</ReadOnly>
+              <ReadOnly>
+                {settings.time} {t('settings.min')}
+              </ReadOnly>
             )
           }
         />
 
         <Row
-          label="Pista al impostor"
-          hint="Dar una pista vaga en vez de nada"
+          label={t('settings.hintLabel')}
+          hint={t('settings.hintHint')}
           control={
             editable ? (
               <Toggle checked={settings.hints} onChange={(v) => onChange({ hints: v })} />
             ) : (
-              <ReadOnly>{settings.hints ? 'Sí' : 'No'}</ReadOnly>
+              <ReadOnly>{settings.hints ? t('settings.yes') : t('settings.no')}</ReadOnly>
             )
           }
         />
 
         <Row
-          label="Máx. jugadores"
-          hint="Aforo de la sala"
+          label={t('settings.maxLabel')}
+          hint={t('settings.maxHint')}
           control={
             editable ? (
               <Stepper

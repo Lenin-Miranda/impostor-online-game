@@ -44,7 +44,13 @@ const baseRoom = {
 };
 
 const oneFootballer = [
-  { id: "f1", name: "Messi", league: "Legends", hint: "zurdo, baja estatura" },
+  {
+    id: "f1",
+    name: "Messi",
+    league: "Legends",
+    hint: "zurdo, baja estatura",
+    hint_en: "left-footed, short",
+  },
 ];
 
 describe("GameService", () => {
@@ -105,8 +111,11 @@ describe("GameService", () => {
     expect(impostors).toHaveLength(1);
     expect(crew).toHaveLength(2);
 
-    // Solo el impostor recibe la pista del futbolista; el crew, nada.
-    expect(impostors[0].hint).toBe("zurdo, baja estatura");
+    // Solo el impostor recibe la pista (bilingüe); el crew, nada.
+    expect(impostors[0].hint).toEqual({
+      es: "zurdo, baja estatura",
+      en: "left-footed, short",
+    });
     expect(crew.every((c) => c.hint === null)).toBe(true);
   });
 

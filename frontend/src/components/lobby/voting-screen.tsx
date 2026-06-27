@@ -2,6 +2,7 @@
 
 import { motion } from 'motion/react';
 import { Check } from '@phosphor-icons/react';
+import { useI18n } from '@/i18n';
 import type { Player } from './types';
 
 function initials(name: string) {
@@ -23,6 +24,7 @@ export function VotingScreen({
   voteProgress: { voted: number; total: number } | null;
   onVote: (targetId: string) => void;
 }) {
+  const { t } = useI18n();
   const others = players.filter((p) => p.id !== myId);
 
   return (
@@ -33,13 +35,11 @@ export function VotingScreen({
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="w-full max-w-[560px]"
       >
-        <p className="font-display text-sm uppercase tracking-[0.2em] text-volt">Votación</p>
-        <h1 className="mt-3 font-display text-3xl font-bold tracking-tight">
-          ¿Quién es el impostor?
-        </h1>
-        <p className="mt-2 text-[15px] text-mute">
-          Toca a quien sospeches. Puedes cambiar tu voto hasta que voten todos.
+        <p className="font-display text-sm uppercase tracking-[0.2em] text-volt">
+          {t('voting.eyebrow')}
         </p>
+        <h1 className="mt-3 font-display text-3xl font-bold tracking-tight">{t('voting.title')}</h1>
+        <p className="mt-2 text-[15px] text-mute">{t('voting.sub')}</p>
 
         <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {others.map((p) => {
@@ -69,10 +69,10 @@ export function VotingScreen({
 
         <p className="mt-7 text-center text-sm text-mute">
           {voteProgress
-            ? `${voteProgress.voted}/${voteProgress.total} han votado…`
+            ? t('voting.progress', { voted: voteProgress.voted, total: voteProgress.total })
             : myVote
-              ? 'Voto registrado. Esperando al resto…'
-              : 'Aún no has votado.'}
+              ? t('voting.voted')
+              : t('voting.notVoted')}
         </p>
       </motion.div>
     </div>

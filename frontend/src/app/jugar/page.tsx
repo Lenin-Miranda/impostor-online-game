@@ -6,12 +6,15 @@ import { motion } from 'motion/react';
 import { ArrowRight } from '@phosphor-icons/react';
 import { roomsApi } from '@/lib/api';
 import { saveIdentity } from '@/lib/identity';
+import { useI18n } from '@/i18n';
 import { BrandLogo } from '@/components/ui/brand';
+import { LanguageToggle } from '@/components/ui/language-toggle';
 
 type Mode = 'create' | 'join';
 
 export default function JugarPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [mode, setMode] = useState<Mode>('create');
   const [nickname, setNickname] = useState('');
   const [code, setCode] = useState('');
@@ -22,11 +25,11 @@ export default function JugarPage() {
     e.preventDefault();
     setError(null);
     if (nickname.trim().length < 2) {
-      setError('El nombre debe tener al menos 2 caracteres.');
+      setError(t('play.errorName'));
       return;
     }
     if (mode === 'join' && code.trim().length < 4) {
-      setError('Escribe el código de la sala.');
+      setError(t('play.errorCode'));
       return;
     }
     setLoading(true);
@@ -39,7 +42,7 @@ export default function JugarPage() {
       saveIdentity(roomCode, { playerId: result.player.id, nickname: result.player.nickname });
       router.push(`/sala/${roomCode}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Algo salió mal.');
+      setError(err instanceof Error ? err.message : t('play.errorGeneric'));
       setLoading(false);
     }
   }
@@ -74,32 +77,35 @@ export default function JugarPage() {
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="w-[calc(100vw-4rem)] max-w-[420px]"
       >
-        <BrandLogo />
+        <div className="flex items-center justify-between">
+          <BrandLogo />
+          <LanguageToggle />
+        </div>
 
         <div className="mt-8 flex rounded-full border border-line bg-ink-2 p-1">
-          {tab('create', 'Crear sala')}
-          {tab('join', 'Unirse')}
+          {tab('create', t('play.createTab'))}
+          {tab('join', t('play.joinTab'))}
         </div>
 
         <form onSubmit={submit} className="mt-6">
           {mode === 'join' && (
             <div className="mb-4">
               <label htmlFor="code" className="block text-sm text-mute">
-                Código de la sala
+                {t('play.codeLabel')}
               </label>
               <input
                 id="code"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 maxLength={5}
-                placeholder="Ej. 7K2P9"
+                placeholder={t('play.codePlaceholder')}
                 className="mt-2 w-full rounded-xl border border-line bg-surface px-4 py-3 font-display text-lg tracking-[0.2em] text-bone outline-none transition-colors placeholder:tracking-normal placeholder:text-mute focus:border-volt"
               />
             </div>
           )}
 
           <label htmlFor="nickname" className="block text-sm text-mute">
-            Tu nombre
+            {t('play.nameLabel')}
           </label>
           <input
             id="nickname"
@@ -107,7 +113,7 @@ export default function JugarPage() {
             onChange={(e) => setNickname(e.target.value)}
             maxLength={20}
             autoFocus
-            placeholder="Ej. Lenin"
+            placeholder={t('play.namePlaceholder')}
             className="mt-2 w-full rounded-xl border border-line bg-surface px-4 py-3 font-display text-[15px] text-bone outline-none transition-colors placeholder:text-mute focus:border-volt"
           />
 
@@ -118,7 +124,7 @@ export default function JugarPage() {
             disabled={loading}
             className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-volt font-display font-medium text-ink transition-colors hover:bg-volt-deep disabled:opacity-50"
           >
-            {loading ? 'Un momento…' : mode === 'create' ? 'Crear sala' : 'Entrar'}
+            {loading ? t('common.loading') : mode === 'create' ? t('play.createBtn') : t('play.joinBtn')}
             {!loading && <ArrowRight weight="bold" className="size-[18px]" />}
           </button>
         </form>

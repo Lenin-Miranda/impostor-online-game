@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { Copy, Check, SignOut } from '@phosphor-icons/react';
 import { motion } from 'motion/react';
+import { useI18n } from '@/i18n';
 
 export function RoomHeader({ code, count, max }: { code: string; count: number; max: number }) {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -25,7 +27,7 @@ export function RoomHeader({ code, count, max }: { code: string; count: number; 
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-volt opacity-60" />
             <span className="relative inline-flex size-2 rounded-full bg-volt" />
           </span>
-          Sala en espera
+          {t('room.waiting')}
         </div>
 
         <div className="mt-3 flex items-center gap-3">
@@ -34,7 +36,7 @@ export function RoomHeader({ code, count, max }: { code: string; count: number; 
             type="button"
             onClick={copy}
             className="grid size-10 place-items-center rounded-full border border-line text-mute transition-colors hover:border-bone/40 hover:text-bone"
-            aria-label="Copiar código"
+            aria-label={t('room.copy')}
           >
             {copied ? <Check weight="bold" className="size-4 text-volt" /> : <Copy weight="bold" className="size-4" />}
           </button>
@@ -43,12 +45,12 @@ export function RoomHeader({ code, count, max }: { code: string; count: number; 
             animate={{ opacity: copied ? 1 : 0 }}
             className="font-display text-sm text-volt"
           >
-            ¡Copiado!
+            {t('room.copied')}
           </motion.span>
         </div>
 
         <p className="mt-2 text-[15px] text-mute">
-          Comparte el código con tu grupo. <span className="text-bone">{count}</span> de {max} jugadores dentro.
+          {t('room.share')} <span className="text-bone">{count}</span> {t('room.ofMax', { max })}
         </p>
       </div>
 
@@ -57,7 +59,7 @@ export function RoomHeader({ code, count, max }: { code: string; count: number; 
         className="inline-flex items-center gap-2 self-start rounded-full border border-line px-4 py-2 text-sm text-mute transition-colors hover:border-bone/40 hover:text-bone"
       >
         <SignOut weight="bold" className="size-4" />
-        Salir
+        {t('room.leave')}
       </a>
     </div>
   );

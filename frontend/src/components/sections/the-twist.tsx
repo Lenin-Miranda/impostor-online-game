@@ -2,6 +2,7 @@
 
 import { Reveal } from '../ui/reveal';
 import { ScrambleText } from '../ui/scramble';
+import { useI18n } from '@/i18n';
 
 const NAMES = [
   'Mbappé', 'Haaland', 'Bellingham', 'Vini Jr', 'Rodri', 'Pedri',
@@ -28,21 +29,18 @@ function Strip() {
 }
 
 export function TheTwist() {
+  const { t } = useI18n();
   return (
     <section id="el-twist" className="relative overflow-hidden border-y border-line bg-ink-2 py-28 sm:py-36">
       <div className="mx-auto max-w-[1200px] px-5 sm:px-8">
         <Reveal className="max-w-[24ch]">
           <h2 className="font-display text-4xl font-bold leading-[1.0] tracking-tight sm:text-6xl">
-            El impostor no sabe nada.
-            <span className="text-impostor"> Y aun así tiene que hacerse pasar por uno más.</span>
+            {t('twist.heading1')}
+            <span className="text-impostor">{t('twist.heading2')}</span>
           </h2>
         </Reveal>
         <Reveal delay={0.1} className="mt-7 max-w-[58ch]">
-          <p className="text-lg leading-relaxed text-mute">
-            Recibe una pista vaga y nada más. Tiene que leer la mesa, fingir que
-            sabe y desviar la sospecha. Cuando funciona, es oro. Cuando lo descubres,
-            también. Ese es todo el juego.
-          </p>
+          <p className="text-lg leading-relaxed text-mute">{t('twist.body')}</p>
         </Reveal>
       </div>
 

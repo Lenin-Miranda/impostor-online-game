@@ -12,6 +12,7 @@ import { Button } from "../ui/button";
 import { Magnetic } from "../ui/magnetic";
 import { BrandLockup } from "../ui/brand";
 import { FormationBoard } from "./formation-board";
+import { useI18n } from "@/i18n";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -33,6 +34,7 @@ const fade: Variants = {
 };
 
 export function Hero() {
+  const { t } = useI18n();
   const reduce = useReducedMotion();
   const mx = useMotionValue(50);
   const my = useMotionValue(28);
@@ -81,7 +83,7 @@ export function Hero() {
                 initial={reduce ? false : "hidden"}
                 animate={reduce ? false : "show"}
               >
-                Todos conocen
+                {t("hero.headline1")}
               </motion.span>
             </span>
             <span className="block overflow-hidden pb-2">
@@ -92,8 +94,8 @@ export function Hero() {
                 initial={reduce ? false : "hidden"}
                 animate={reduce ? false : "show"}
               >
-                al jugador.{" "}
-                <span className="text-impostor italic">Uno finge.</span>
+                {t("hero.headline2")}{" "}
+                <span className="text-impostor italic">{t("hero.headline2Accent")}</span>
               </motion.span>
             </span>
           </h1>
@@ -105,8 +107,7 @@ export function Hero() {
             animate={reduce ? false : "show"}
             className="mt-7 max-w-[46ch] text-lg leading-relaxed text-mute"
           >
-            El juego del impostor en clave fútbol. Todos reciben un jugador
-            secreto. Uno no. Descúbrelo antes de que se salga con la suya.
+            {t("hero.subtext")}
           </motion.p>
 
           <motion.div
@@ -118,13 +119,13 @@ export function Hero() {
           >
             <Magnetic>
               <Button href="/jugar" size="lg">
-                Crear sala
+                {t("nav.createRoom")}
                 <ArrowRight weight="bold" className="size-[18px]" />
               </Button>
             </Magnetic>
             <Button href="#como-se-juega" variant="ghost" size="lg">
               <PlayCircle weight="bold" className="size-[18px]" />
-              Cómo se juega
+              {t("hero.howToPlay")}
             </Button>
           </motion.div>
         </div>

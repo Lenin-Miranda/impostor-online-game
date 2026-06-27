@@ -2,6 +2,7 @@
 
 import { motion } from 'motion/react';
 import { Detective, Trophy, ArrowRight, FlagCheckered } from '@phosphor-icons/react';
+import { useI18n } from '@/i18n';
 import type { Player } from './types';
 import type { RoundResult } from './game-types';
 
@@ -22,6 +23,7 @@ export function ResultScreen({
   onNextRound: () => void;
   onEndGame: () => void;
 }) {
+  const { t } = useI18n();
   const nameOf = (id: string) => players.find((p) => p.id === id)?.name ?? '—';
   const impostorNames = result.impostorIds.map(nameOf).join(', ');
   const crewWon = result.outcome === 'crew';
@@ -47,23 +49,22 @@ export function ResultScreen({
             crewWon ? 'text-volt' : 'text-impostor'
           }`}
         >
-          {crewWon ? '¡Atraparon al impostor!' : 'El impostor sobrevivió'}
+          {crewWon ? t('result.caughtTitle') : t('result.survivedTitle')}
         </h1>
 
         <p className="mt-3 text-[15px] text-mute">
-          El impostor era <span className="font-semibold text-bone">{impostorNames}</span>.
-          {result.tie && ' La votación quedó en empate.'}
+          {t('result.impostorWas')} <span className="font-semibold text-bone">{impostorNames}</span>.
+          {result.tie && t('result.tie')}
         </p>
         <p className="mt-1 text-[15px] text-mute">
-          El jugador secreto era{' '}
+          {t('result.secretWas')}{' '}
           <span className="font-semibold text-bone">{result.secret ?? '—'}</span>.
         </p>
 
-        {/* Marcador */}
         <div className="mt-8 overflow-hidden rounded-2xl border border-line bg-surface text-left">
           <div className="flex items-center justify-between border-b border-line px-5 py-2.5">
-            <span className="font-display text-xs font-medium text-mute">Jugador</span>
-            <span className="font-display text-xs font-medium text-mute">Puntos</span>
+            <span className="font-display text-xs font-medium text-mute">{t('result.colPlayer')}</span>
+            <span className="font-display text-xs font-medium text-mute">{t('result.colPoints')}</span>
           </div>
           {result.standings.map((s, i) => (
             <div
@@ -74,9 +75,9 @@ export function ResultScreen({
                 <span className="w-5 font-display text-sm text-mute tabular-nums">{i + 1}</span>
                 <span className="font-display text-[15px] font-semibold">
                   {s.nickname}
-                  {s.playerId === myId && <span className="text-mute"> · tú</span>}
+                  {s.playerId === myId && <span className="text-mute"> · {t('result.you')}</span>}
                   {result.impostorIds.includes(s.playerId) && (
-                    <span className="ml-2 text-xs text-impostor">impostor</span>
+                    <span className="ml-2 text-xs text-impostor">{t('result.impostorTag')}</span>
                   )}
                 </span>
               </span>
@@ -87,7 +88,6 @@ export function ResultScreen({
           ))}
         </div>
 
-        {/* Controles del anfitrión */}
         {isHost ? (
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <motion.button
@@ -97,7 +97,7 @@ export function ResultScreen({
               transition={{ duration: 0.16, ease: EASE }}
               className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-volt font-display font-medium text-ink transition-colors hover:bg-volt-deep"
             >
-              Siguiente ronda
+              {t('result.nextRound')}
               <ArrowRight weight="bold" className="size-[18px]" />
             </motion.button>
             <motion.button
@@ -108,13 +108,11 @@ export function ResultScreen({
               className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full border border-line font-display font-medium text-bone transition-colors hover:bg-surface"
             >
               <FlagCheckered weight="bold" className="size-[18px]" />
-              Terminar partida
+              {t('result.endGame')}
             </motion.button>
           </div>
         ) : (
-          <p className="mt-8 text-[13px] text-mute">
-            Esperando a que el anfitrión empiece la siguiente ronda…
-          </p>
+          <p className="mt-8 text-[13px] text-mute">{t('result.waitHost')}</p>
         )}
       </motion.div>
     </div>

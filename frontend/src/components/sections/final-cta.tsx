@@ -5,8 +5,10 @@ import { Reveal } from "../ui/reveal";
 import { Button } from "../ui/button";
 import { Magnetic } from "../ui/magnetic";
 import { BrandIcon } from "../ui/brand";
+import { useI18n } from "@/i18n";
 
 export function FinalCta() {
+  const { t } = useI18n();
   return (
     <section
       id="crear-sala"
@@ -23,26 +25,21 @@ export function FinalCta() {
         </Reveal>
         <Reveal>
           <h2 className="mx-auto max-w-[18ch] font-display text-[clamp(2.4rem,6vw,4.5rem)] font-bold leading-[0.98] tracking-[-0.03em]">
-            Reúne a tu equipo y encuentra al impostor.
+            {t('cta.heading')}
           </h2>
         </Reveal>
         <Reveal delay={0.1}>
-          <p className="mx-auto mt-6 max-w-[46ch] text-lg text-mute">
-            Crea una sala en segundos y pásale el código al grupo. La primera
-            ronda empieza cuando estéis todos.
-          </p>
+          <p className="mx-auto mt-6 max-w-[46ch] text-lg text-mute">{t('cta.body')}</p>
         </Reveal>
         <Reveal delay={0.2}>
           <div className="mt-10 flex flex-col items-center gap-4">
             <Magnetic strength={0.4}>
               <Button href="/jugar" size="lg">
-                Crear sala
+                {t('cta.createRoom')}
                 <ArrowRight weight="bold" className="size-[18px]" />
               </Button>
             </Magnetic>
-            <p className="font-display text-sm text-mute">
-              Gratis, sin cuenta, desde el celular
-            </p>
+            <p className="font-display text-sm text-mute">{t('cta.note')}</p>
           </div>
         </Reveal>
       </div>

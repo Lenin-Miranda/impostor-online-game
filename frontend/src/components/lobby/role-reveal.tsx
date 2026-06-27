@@ -2,6 +2,7 @@
 
 import { motion } from 'motion/react';
 import { Eye, EyeClosed, ArrowRight } from '@phosphor-icons/react';
+import { useI18n } from '@/i18n';
 import type { YourRole } from './game-types';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -17,6 +18,7 @@ export function RoleReveal({
   isHost: boolean;
   onToVoting: () => void;
 }) {
+  const { t, lang } = useI18n();
   const isImpostor = role.role === 'impostor';
 
   return (
@@ -27,7 +29,9 @@ export function RoleReveal({
         transition={{ duration: 0.6, ease: EASE }}
         className="w-full max-w-[440px] text-center"
       >
-        <p className="font-display text-sm uppercase tracking-[0.2em] text-mute">Sala {code}</p>
+        <p className="font-display text-sm uppercase tracking-[0.2em] text-mute">
+          {t('role.room')} {code}
+        </p>
 
         <div
           className={`mt-6 rounded-3xl border p-10 ${
@@ -48,39 +52,36 @@ export function RoleReveal({
             )}
           </div>
 
-          {isImpostor ? (
+          {role.role === 'impostor' ? (
             <>
               <h1 className="mt-6 font-display text-4xl font-bold tracking-tight text-impostor">
-                Eres el impostor
+                {t('role.impostorTitle')}
               </h1>
-              <p className="mt-3 text-[15px] text-mute">
-                No sabes el jugador secreto. Disimula y no te delates.
-              </p>
+              <p className="mt-3 text-[15px] text-mute">{t('role.impostorSub')}</p>
               {role.hint && (
                 <div className="mt-6 rounded-2xl border border-line bg-ink-2 px-5 py-4">
                   <p className="font-display text-xs uppercase tracking-[0.18em] text-mute">
-                    Tu única pista
+                    {t('role.hintLabel')}
                   </p>
-                  <p className="mt-1 font-display text-lg font-semibold text-bone">{role.hint}</p>
+                  <p className="mt-1 font-display text-lg font-semibold text-bone">
+                    {role.hint[lang]}
+                  </p>
                 </div>
               )}
             </>
           ) : (
             <>
               <h1 className="mt-6 font-display text-2xl font-semibold tracking-tight text-mute">
-                El jugador secreto es
+                {t('role.secretTitle')}
               </h1>
               <p className="mt-2 font-display text-4xl font-bold tracking-tight text-volt">
                 {role.footballer}
               </p>
-              <p className="mt-4 text-[15px] text-mute">
-                Da pistas sin ser obvio. Hay un impostor que no lo sabe.
-              </p>
+              <p className="mt-4 text-[15px] text-mute">{t('role.secretSub')}</p>
             </>
           )}
         </div>
 
-        {/* Control del anfitrión para avanzar a la votación */}
         {isHost ? (
           <motion.button
             type="button"
@@ -89,13 +90,11 @@ export function RoleReveal({
             transition={{ duration: 0.16, ease: EASE }}
             className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-volt font-display font-medium text-ink transition-colors hover:bg-volt-deep"
           >
-            Pasar a votación
+            {t('role.toVoting')}
             <ArrowRight weight="bold" className="size-[18px]" />
           </motion.button>
         ) : (
-          <p className="mt-6 text-[13px] text-mute">
-            Cuando todos lo hayan visto, el anfitrión abre la votación.
-          </p>
+          <p className="mt-6 text-[13px] text-mute">{t('role.waitVoting')}</p>
         )}
       </motion.div>
     </div>

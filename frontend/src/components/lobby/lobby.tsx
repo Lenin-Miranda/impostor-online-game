@@ -23,6 +23,8 @@ import { roomsApi, type ApiRoomWithPlayers, type ApiPlayer } from '@/lib/api';
 import { getSocket } from '@/lib/socket';
 import { getIdentity, saveIdentity } from '@/lib/identity';
 import { BrandLogo } from '../ui/brand';
+import { useI18n } from '@/i18n';
+import { LanguageToggle } from '../ui/language-toggle';
 
 const DEFAULT_SETTINGS: Settings = {
   impostors: 1,
@@ -55,6 +57,7 @@ function remainingPendingSettings(serverSettings: Settings, pending: SettingsPat
 }
 
 export function Lobby({ code }: { code: string }) {
+  const { t } = useI18n();
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [room, setRoom] = useState<ApiRoomWithPlayers | null>(null);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
@@ -200,10 +203,10 @@ export function Lobby({ code }: { code: string }) {
     return (
       <div className="grid min-h-[100dvh] place-items-center px-5 text-center">
         <div>
-          <p className="font-display text-2xl font-bold">No se pudo cargar la sala</p>
+          <p className="font-display text-2xl font-bold">{t('lobby.errorTitle')}</p>
           <p className="mt-2 text-mute">{error}</p>
           <a href="/" className="mt-6 inline-block text-volt underline">
-            Volver al inicio
+            {t('common.backToHome')}
           </a>
         </div>
       </div>
@@ -250,8 +253,8 @@ export function Lobby({ code }: { code: string }) {
       <div className="grid min-h-[100dvh] place-items-center px-5 text-center">
         <div>
           <Hourglass weight="bold" className="mx-auto size-6 text-volt" />
-          <p className="mt-4 font-display text-xl font-semibold">La partida está en curso</p>
-          <p className="mt-2 text-mute">Reconectando con la sala…</p>
+          <p className="mt-4 font-display text-xl font-semibold">{t('lobby.inGameTitle')}</p>
+          <p className="mt-2 text-mute">{t('lobby.inGameSub')}</p>
         </div>
       </div>
     );
@@ -263,6 +266,7 @@ export function Lobby({ code }: { code: string }) {
       <header className="border-b border-line">
         <div className="mx-auto flex h-16 max-w-[1100px] items-center justify-between px-5 sm:px-8">
           <BrandLogo />
+          <LanguageToggle />
         </div>
       </header>
 
@@ -294,20 +298,16 @@ export function Lobby({ code }: { code: string }) {
                   className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-volt font-display font-medium text-ink transition-colors hover:bg-volt-deep disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <Play weight="fill" className="size-[18px]" />
-                  Empezar partida
+                  {t('lobby.startGame')}
                 </motion.button>
                 <p className="mt-3 text-center text-[13px] text-mute">
-                  {canStart
-                    ? 'Repartirá un jugador secreto y al impostor.'
-                    : 'Necesitas al menos 3 jugadores para empezar.'}
+                  {canStart ? t('lobby.startHint') : t('lobby.needPlayers')}
                 </p>
               </div>
             ) : (
               <div className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-5">
                 <Hourglass weight="bold" className="size-5 text-volt" />
-                <p className="text-[15px] text-mute">
-                  Esperando a que el anfitrión empiece la partida…
-                </p>
+                <p className="text-[15px] text-mute">{t('lobby.waitingHost')}</p>
               </div>
             )}
           </aside>

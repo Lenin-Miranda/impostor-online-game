@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { ArrowRight } from '@phosphor-icons/react';
 import { roomsApi, type ApiPlayer } from '@/lib/api';
+import { useI18n } from '@/i18n';
 import { BrandIcon } from '../ui/brand';
 
 export function JoinForm({
@@ -13,6 +14,7 @@ export function JoinForm({
   code: string;
   onJoined: (code: string, player: ApiPlayer) => void;
 }) {
+  const { t } = useI18n();
   const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +22,7 @@ export function JoinForm({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (nickname.trim().length < 2) {
-      setError('El nombre debe tener al menos 2 caracteres.');
+      setError(t('join.errorName'));
       return;
     }
     setLoading(true);
@@ -29,7 +31,7 @@ export function JoinForm({
       const { player } = await roomsApi.join(code, nickname.trim());
       onJoined(code, player);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo entrar a la sala.');
+      setError(err instanceof Error ? err.message : t('join.errorGeneric'));
       setLoading(false);
     }
   }
@@ -44,12 +46,14 @@ export function JoinForm({
         className="w-[calc(100vw-4rem)] max-w-[400px]"
       >
         <BrandIcon className="mb-8 h-14 w-14 shadow-[0_20px_60px_-24px_var(--color-volt)]" />
-        <p className="font-display text-sm uppercase tracking-[0.2em] text-volt">Sala {code}</p>
-        <h1 className="mt-3 font-display text-3xl font-bold tracking-tight">Entra a la sala</h1>
-        <p className="mt-2 text-[15px] text-mute">Elige un nombre para que tu grupo te reconozca.</p>
+        <p className="font-display text-sm uppercase tracking-[0.2em] text-volt">
+          {t('join.room')} {code}
+        </p>
+        <h1 className="mt-3 font-display text-3xl font-bold tracking-tight">{t('join.title')}</h1>
+        <p className="mt-2 text-[15px] text-mute">{t('join.subtitle')}</p>
 
         <label htmlFor="nickname" className="mt-8 block text-sm text-mute">
-          Tu nombre
+          {t('join.nameLabel')}
         </label>
         <input
           id="nickname"
@@ -57,7 +61,7 @@ export function JoinForm({
           onChange={(e) => setNickname(e.target.value)}
           maxLength={20}
           autoFocus
-          placeholder="Ej. Lenin"
+          placeholder={t('join.namePlaceholder')}
           className="mt-2 w-full rounded-xl border border-line bg-surface px-4 py-3 font-display text-[15px] text-bone outline-none transition-colors placeholder:text-mute focus:border-volt"
         />
 
@@ -68,7 +72,7 @@ export function JoinForm({
           disabled={loading}
           className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-volt font-display font-medium text-ink transition-colors hover:bg-volt-deep disabled:opacity-50"
         >
-          {loading ? 'Entrando…' : 'Entrar'}
+          {loading ? t('join.entering') : t('join.enter')}
           {!loading && <ArrowRight weight="bold" className="size-[18px]" />}
         </button>
       </motion.form>
