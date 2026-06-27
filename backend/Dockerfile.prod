@@ -1,21 +1,23 @@
+# Pensado para construirse con el CONTEXTO en la raíz del repo
+# (así lo hace Render). Por eso las rutas son `backend/...`.
+#
+# Local:  docker build -f backend/Dockerfile.prod -t impostor-backend:prod .
+# Render: Root Directory = (vacío)  ·  Dockerfile Path = backend/Dockerfile.prod
+
 # ── Build stage ──────────────────────────────────────────────
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY package*.json ./
+COPY backend/package*.json ./
 RUN npm install
-COPY . .
+COPY backend/ ./
 RUN npm run build
 
 # ── Runtime stage ────────────────────────────────────────────
 FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
-
-# Solo dependencias de producción
-COPY package*.json ./
+COPY backend/package*.json ./
 RUN npm install --omit=dev && npm cache clean --force
-
-# Artefacto compilado
 COPY --from=build /app/dist ./dist
 
 # El host inyecta PORT; main.ts escucha en process.env.PORT en 0.0.0.0

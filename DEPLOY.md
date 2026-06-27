@@ -17,7 +17,7 @@ Arquitectura en producción:
 2. Configuración:
    - **Root Directory:** `backend`
    - **Runtime:** Docker
-   - **Dockerfile Path:** `backend/Dockerfile.prod`
+   - **Dockerfile Path:** `Dockerfile.prod`  *(relativo al Root Directory, sin `backend/`)*
    - **Health Check Path:** `/api/health`
 3. **Environment** (variables):
    - `SUPABASE_URL` = `https://qplpevgxdncelqrvosoh.supabase.co`
