@@ -20,7 +20,7 @@ An impostor game with a soccer theme, built to play with friends. Monorepo with:
 ## Structure
 
 ```
-impostor-futbol-online/
+impostor-online-game/
 ├── docker-compose.yml      # orchestrates frontend + backend
 ├── .env.example            # shared variables (copy to .env)
 ├── frontend/               # Next.js
@@ -29,12 +29,18 @@ impostor-futbol-online/
 
 ## Getting Started
 
-### 1. Start Supabase locally (optional but recommended)
+### 1. Clone and start Supabase locally
+
+```bash
+git clone https://github.com/Lenin-Miranda/impostor-online-game.git
+cd impostor-online-game
+```
+
+The repository already includes `supabase/config.toml` and migrations; do not initialize a new Supabase project over them.
 
 The Supabase CLI starts its own Docker stack (Postgres, Auth, Studio...):
 
 ```bash
-npx supabase init    # only the first time, creates the supabase/ folder
 npx supabase start   # prints the API URL, anon key, and service_role key
 ```
 
@@ -66,6 +72,15 @@ you edit files.
 
 ## Development Without Docker (Alternative)
 
+Copy and fill the host-development templates first:
+
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.local.example frontend/.env.local
+```
+
+For native processes use `http://localhost:54321` as the Supabase URL. The root Docker template uses `host.docker.internal` for the backend container instead.
+
 ```bash
 # Backend
 cd backend && npm install && npm run start:dev
@@ -80,3 +95,12 @@ cd frontend && npm install && npm run dev
 - Use the `category` setting during role assignment (the backend currently ignores it).
 - Auth: JWT token per player + host guard in the gateway.
 - Deploy: Vercel (frontend) + backend host (Render/Fly) + Supabase Cloud.
+
+## Checks and troubleshooting
+
+- Backend: `cd backend`, then `npm test` and `npm run build`.
+- Frontend: `cd frontend`, then `npm run build`.
+- Verify create/join, role reveal, voting and round transitions using two browser sessions.
+- WebSocket/API traffic must reach port 3001; Supabase traffic uses its own URL and keys.
+- For a hosted Supabase database, apply the committed migrations before playing; starting Compose only starts the application services.
+
